@@ -1,5 +1,5 @@
-// src/screens/HomeScreen.js
-import React, { useMemo, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
   View,
@@ -8,252 +8,398 @@ import {
   FlatList,
   StyleSheet,
   Dimensions,
-  Platform,
+  ActivityIndicator,
+  Image,
   TouchableOpacity,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-
-// Paleta de colores similar a tu App actual
-const COLORS = {
-  background: "#E0E5EC",
-  lightShadow: "#FFFFFF",
-  darkShadow: "#A3B1C6",
-  text: "#444444",
-  placeholder: "#C1C9D6",
-};
+import { getEvents } from "../api/events";
+import { useThemeSettings } from "../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = width - 40;
-const CARD_HEIGHT = 260;
-
-// Componente tarjeta neumórfica (mismo truco que tenías en App.js)
-const NeumorphicCard = ({ children, width, height }) => {
-  if (Platform.OS === "android") {
-    return (
-      <View style={[styles.androidContainer, { width, height }]}>
-        <View style={styles.innerContent}>{children}</View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.iosContainer, { width, height }]}>
-      <View style={[styles.iosShadowLight, { width, height }]} />
-      <View style={[styles.iosShadowDark, { width, height }]} />
-      <View
-        style={[styles.innerContent, { backgroundColor: COLORS.background }]}
-      >
-        {children}
-      </View>
-    </View>
-  );
-};
-
-// Datos de prueba (después los cambiaremos por la API real)
-const MOCK_EVENTS = [
-  {
-    id: "1",
-    title: "Concierto de Rock",
-    location: "Teatro Municipal",
-    date: "2025-12-20",
-  },
-  {
-    id: "2",
-    title: "Festival de Jazz",
-    location: "Parque Costanera",
-    date: "2026-01-05",
-  },
-  {
-    id: "3",
-    title: "Teatro en la Calle",
-    location: "Plaza Central",
-    date: "2026-02-10",
-  },
-];
+const ANCHO_TARJETA = width - 32; // margen horizontal de 16 a cada lado
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const [query, setQuery] = useState("");
+  const { isDark: esOscuro, setIsDark: setEsOscuro } = useThemeSettings();
 
+  const [textoBusqueda, setTextoBusqueda] = useState("");
+  const [eventos, setEventos] = useState([]);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
+
+  // Paleta de colores (claro / oscuro)
+  const COLORES = {
+    fondo: esOscuro ? "#020617" : "#F5F3FF",
+    textoPrincipal: esOscuro ? "#F9FAFB" : "#1F2933",
+    textoSecundario: esOscuro ? "#E5E7EB" : "#4B5563",
+    morado: "#A855F7",
+    moradoSuave: "#E9D5FF",
+    bordeMorado: "#C4B5FD",
+    fondoTarjeta: esOscuro ? "#020617" : "#FFFFFF",
+    sombraTarjeta: "#000000",
+  };
+
+  // Cargar eventos desde la API
+  useEffect(() => {
+    const cargarEventos = async () => {
+      try {
+        setCargando(true);
+        setError("");
+        const resultado = await getEvents(1, 20);
+        setEventos(Array.isArray(resultado.data) ? resultado.data : []);
+      } catch (err) {
+        console.error(err);
+        setError("No se pudieron cargar los eventos.");
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarEventos();
+  }, []);
+
+  // Filtro por texto
   const eventosFiltrados = useMemo(() => {
-    if (!query.trim()) return MOCK_EVENTS;
-    const q = query.toLowerCase();
-    return MOCK_EVENTS.filter((ev) => ev.title.toLowerCase().includes(q));
-  }, [query]);
+    if (!textoBusqueda.trim()) return eventos;
+    const q = textoBusqueda.toLowerCase();
+    return eventos.filter((ev) =>
+      (ev.name ?? "")
+        .toString()
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [textoBusqueda, eventos]);
 
-  const renderItem = ({ item }) => (
-    <View style={{ marginBottom: 25, alignItems: "center" }}>
-      <NeumorphicCard width={CARD_WIDTH} height={CARD_HEIGHT}>
-        {/* “Imagen” de relleno */}
-        <View style={styles.imagePlaceholder} />
+  // Tarjeta de cada evento
+  const renderizarItem = ({ item }) => {
+    let fechaFormateada = "Fecha no disponible";
+    if (item.date) {
+      try {
+        fechaFormateada = new Date(item.date).toLocaleString("es-CL", {
+          dateStyle: "short",
+          timeStyle: "short",
+        });
+      } catch {
+        fechaFormateada = item.date;
+      }
+    }
 
-        <View style={styles.cardTextContainer}>
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          <Text style={styles.cardSubtitle}>
-            {item.location} • {item.date}
-          </Text>
+    const urlImagen =
+      item.image ||
+      "https://placehold.co/600x400/CCCCCC/777777?text=600+x+400";
 
-          <TouchableOpacity
-            style={styles.cardButton}
-            onPress={() => navigation.navigate("EventDetail", { event: item })}
-          >
-            <Text style={styles.cardButtonText}>Ver detalle</Text>
-          </TouchableOpacity>
+    return (
+      <View style={estilos.contenedorTarjeta}>
+        <View
+          style={[
+            estilos.tarjeta,
+            {
+              backgroundColor: COLORES.fondoTarjeta,
+              shadowColor: COLORES.sombraTarjeta,
+              borderTopColor: COLORES.morado,
+            },
+            esOscuro && {
+              borderColor: "#1F2937",
+            },
+          ]}
+        >
+          {/* Imagen del evento */}
+          <Image
+            source={{ uri: urlImagen }}
+            resizeMode="cover"
+            style={estilos.imagenTarjeta}
+          />
+
+          {/* Texto de la tarjeta */}
+          <View style={estilos.cuerpoTarjeta}>
+            <Text
+              numberOfLines={1}
+              style={[
+                estilos.tituloTarjeta,
+                { color: COLORES.textoPrincipal },
+              ]}
+            >
+              {item.name}
+            </Text>
+
+            {!!item.category && (
+              <Text style={[estilos.metaTarjeta, { color: COLORES.morado }]}>
+                <Text style={estilos.metaEtiqueta}>Categoría: </Text>
+                {item.category}
+              </Text>
+            )}
+
+            {!!item.location && (
+              <Text style={[estilos.metaTarjeta, { color: COLORES.morado }]}>
+                <Text style={estilos.metaEtiqueta}>Lugar: </Text>
+                {item.location}
+              </Text>
+            )}
+
+            <Text style={[estilos.metaTarjeta, { color: COLORES.morado }]}>
+              <Text style={estilos.metaEtiqueta}>Fecha: </Text>
+              {fechaFormateada}
+            </Text>
+
+            <Text
+              style={[estilos.enlaceTarjeta, { color: COLORES.morado }]}
+              onPress={() =>
+                navigation.navigate("EventDetail", {
+                  eventId: item._id,
+                })
+              }
+            >
+              Ver detalle →
+            </Text>
+          </View>
         </View>
-      </NeumorphicCard>
-    </View>
-  );
+      </View>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>TicketNow</Text>
-        <Text style={styles.subtitle}>Eventos</Text>
+    <SafeAreaView
+      style={[estilos.contenedorPantalla, { backgroundColor: COLORES.fondo }]}
+    >
+      {/* ENCABEZADO */}
+      <View style={estilos.encabezado}>
+        {/* Fila superior: título + interruptor tema */}
+        <View style={estilos.encabezadoFilaSuperior}>
+          <Text
+            style={[
+              estilos.textoLogo,
+              { color: COLORES.morado },
+            ]}
+          >
+            TicketNow
+          </Text>
 
+          {/* Interruptor modo claro/oscuro (simple, sin neón) */}
+          <TouchableOpacity
+            onPress={() => setEsOscuro(!esOscuro)}
+            style={[
+              estilos.interruptorTema,
+              {
+                backgroundColor: esOscuro ? "#111827" : COLORES.moradoSuave,
+                borderColor: COLORES.bordeMorado,
+              },
+            ]}
+          >
+            <View
+              style={[
+                estilos.perillaTema,
+                {
+                  transform: [{ translateX: esOscuro ? 18 : 0 }],
+                  backgroundColor: COLORES.morado,
+                },
+              ]}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Botones: Eventos / Compras */}
+        <View style={estilos.encabezadoFilaBotones}>
+          <TouchableOpacity
+            style={[
+              estilos.botonSegmento,
+              {
+                backgroundColor: COLORES.morado,
+                borderColor: COLORES.morado,
+              },
+            ]}
+          >
+            <Text style={estilos.textoBotonSegmentoActivo}>Eventos</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              estilos.botonSegmento,
+              {
+                backgroundColor: "transparent",
+                borderColor: COLORES.bordeMorado,
+              },
+            ]}
+            onPress={() => navigation.navigate("Purchases")}
+          >
+            <Text
+              style={[
+                estilos.textoBotonSegmento,
+                { color: COLORES.morado },
+              ]}
+            >
+              Compras
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* BUSCADOR */}
+      <View style={estilos.contenedorBuscador}>
         <TextInput
-          style={styles.searchBar}
-          placeholder="Buscar..."
-          placeholderTextColor="#999"
-          value={query}
-          onChangeText={setQuery}
-        />
-
-        <FlatList
-          data={eventosFiltrados}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          style={[
+            estilos.buscador,
+            {
+              backgroundColor: COLORES.moradoSuave,
+              borderColor: COLORES.bordeMorado,
+              color: COLORES.textoPrincipal,
+            },
+          ]}
+          placeholder="Buscar evento..."
+          placeholderTextColor="#D4B3FF"
+          value={textoBusqueda}
+          onChangeText={setTextoBusqueda}
         />
       </View>
+
+      {/* CONTENIDO */}
+      {cargando && (
+        <View style={{ marginTop: 40 }}>
+          <ActivityIndicator size="large" color={COLORES.morado} />
+        </View>
+      )}
+
+      {error ? (
+        <View style={{ marginTop: 20, paddingHorizontal: 20 }}>
+          <Text style={{ color: "crimson" }}>{error}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={eventosFiltrados}
+          renderItem={renderizarItem}
+          keyExtractor={(item) => String(item._id)}
+          contentContainerStyle={estilos.contenidoLista}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    paddingTop: 40,
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 0,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: COLORS.text,
-    marginBottom: 5,
-    marginHorizontal: 20,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: "500",
-    color: COLORS.text,
-    marginBottom: 10,
-    marginHorizontal: 20,
-    opacity: 0.7,
-  },
-  searchBar: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#BDC7D4",
-    backgroundColor: COLORS.background,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginHorizontal: 20,
-    marginBottom: 0,
-    color: COLORS.text,
-  },
-  listContent: {
-    paddingBottom: 20,
-    paddingTop: 20,
-  },
-  innerContent: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 15,
-    overflow: "hidden",
-    backgroundColor: COLORS.background,
-    width: "100%",
-    height: "100%",
-  },
-  imagePlaceholder: {
-    backgroundColor: COLORS.placeholder,
-    height: "55%",
-    borderRadius: 15,
-    width: "100%",
-    marginBottom: 10,
-  },
-  cardTextContainer: {
+const estilos = StyleSheet.create({
+  contenedorPantalla: {
     flex: 1,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.text,
-    marginBottom: 4,
+
+  /* ENCABEZADO */
+  encabezado: {
+    paddingTop: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
-  cardSubtitle: {
-    fontSize: 14,
-    color: "#666",
+  encabezadoFilaSuperior: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
-  cardButton: {
-    marginTop: "auto",
-    backgroundColor: "#2563EB", // azul tipo botón comprar
-    paddingVertical: 10,
-    borderRadius: 999,
-    alignItems: "center",
+  textoLogo: {
+    fontSize: 28,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
-  cardButtonText: {
-    color: "#fff",
+
+  // Interruptor tema
+  interruptorTema: {
+    width: 46,
+    height: 24,
+    borderRadius: 999,
+    borderWidth: 1,
+    padding: 2,
+    justifyContent: "center",
+  },
+  perillaTema: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+
+  // Botones de segmento (Eventos / Compras)
+  encabezadoFilaBotones: {
+    flexDirection: "row",
+    marginTop: 4,
+    gap: 8,
+  },
+  botonSegmento: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  textoBotonSegmentoActivo: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  textoBotonSegmento: {
+    fontSize: 14,
     fontWeight: "600",
+  },
+
+  /* BUSCADOR */
+  contenedorBuscador: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    paddingTop: 4,
+  },
+  buscador: {
+    height: 48,
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    borderWidth: 1,
     fontSize: 16,
   },
 
-  // iOS neumorfismo
-  iosContainer: {
-    position: "relative",
+  /* LISTA Y TARJETAS */
+  contenidoLista: {
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 24,
+  },
+  contenedorTarjeta: {
     alignItems: "center",
-    justifyContent: "center",
+    marginBottom: 16,
   },
-  iosShadowLight: {
-    position: "absolute",
-    top: -5,
-    left: -5,
+  tarjeta: {
+    width: ANCHO_TARJETA,
     borderRadius: 20,
-    backgroundColor: COLORS.background,
-    shadowColor: COLORS.lightShadow,
-    shadowOffset: { width: -6, height: -6 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#FFFFFF",
+    borderTopWidth: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  iosShadowDark: {
-    position: "absolute",
-    top: 5,
-    left: 5,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    shadowColor: COLORS.darkShadow,
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
+  imagenTarjeta: {
+    width: "100%",
+    height: 140,
+    backgroundColor: "#E5E7EB",
   },
-
-  // Android neumorfismo
-  androidContainer: {
-    backgroundColor: COLORS.background,
-    elevation: 8,
-    borderRadius: 20,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: "rgba(255,255,255, 0.5)",
-    borderLeftColor: "rgba(255,255,255, 0.5)",
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomColor: "rgba(163, 177, 198, 0.3)",
-    borderRightColor: "rgba(163, 177, 198, 0.3)",
+  cuerpoTarjeta: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  tituloTarjeta: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  metaTarjeta: {
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  metaEtiqueta: {
+    fontWeight: "700",
+  },
+  enlaceTarjeta: {
+    marginTop: 10,
+    fontSize: 13,
+    fontWeight: "700",
   },
 });
