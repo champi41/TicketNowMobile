@@ -1,83 +1,81 @@
-import React, { useEffect, useState } from "react";
-import { Text, View, ScrollView, Image } from "react-native";
-import { getEvents } from "./servicios/api";
+import React, { useState, useMemo } from "react";
+import { Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
+import { useEvents } from "./app/hooks/useEvents"; 
+import EventCard from "./app/componentes/EventCard"; 
+import Busqueda from "./app/componentes/busqueda"; 
 
 export default function App() {
-  const [events, setEvents] = useState([]);
-  const [error, setError] = useState(null);
+  const { events, loading, error } = useEvents();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    getEvents()
-      .then(setEvents)
-      .catch(err => setError(err.toString()));
-  }, []);
+  const filteredEvents = useMemo(() => {
+    if (!searchTerm) {
+      return events;
+    }
+    const lowerCaseSearch = searchTerm.toLowerCase();
+    
+    return events.filter(ev => 
+      ev.name.toLowerCase().includes(lowerCaseSearch) ||
+      ev.location.toLowerCase().includes(lowerCaseSearch) ||
+      ev.category.toLowerCase().includes(lowerCaseSearch)
+    );
+  }, [events, searchTerm]);
 
   return (
-    <ScrollView style={{ backgroundColor: "#f2f2f2", padding: 15 }}>
-      <Text style={{ fontSize: 26, fontWeight: "bold", marginTop: 50, marginBottom: 20 }}>
+    <ScrollView style={styles.container}>
+      <Text style={styles.headerTitle}>
         TicketNow
       </Text>
 
-      {error && <Text style={{ color: "red" }}>Error: {error}</Text>}
+      {/* 1. Componente de Búsqueda */}
+      <Busqueda 
+        searchTerm={searchTerm} 
+        onSearchChange={setSearchTerm} 
+      />
 
-      {events.length === 0 && !error && (
-        <Text>No hay eventos disponibles.</Text>
+      {/* 2. Manejo de Estados */}
+      {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />}
+      {error && <Text style={styles.errorText}>Error: {error}</Text>}
+
+      {/* 3. Renderizado de Eventos */}
+      {!loading && filteredEvents.length === 0 && (
+        <Text style={styles.noEventsText}>
+            {searchTerm 
+                ? `No se encontraron eventos para "${searchTerm}".` 
+                : "No hay eventos disponibles."
+            }
+        </Text>
       )}
 
-      {events.map(ev => (
-        <View
-          key={ev._id}
-          style={{
-            backgroundColor: "white",
-            borderRadius: 12,
-            padding: 15,
-            marginBottom: 20,
-            shadowColor: "#000",
-            shadowOpacity: 0.15,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 3 },
-            elevation: 4
-          }}
-        >
-          {ev.image && (
-            <Image
-              source={{ uri: ev.image }}
-              style={{
-                width: "100%",
-                height: 180,
-                borderRadius: 10,
-                marginBottom: 15
-              }}
-            />
-          )}
-
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-            {ev.name}
-          </Text>
-
-          <Text style={{ color: "#555", marginTop: 4 }}>
-              Categoría: {ev.category}
-          </Text>
-
-          <Text style={{ color: "#555" }}>
-              {ev.location}
-          </Text>
-
-          <Text style={{ color: "#555", marginBottom: 10 }}>
-              {new Date(ev.date).toLocaleDateString()}
-          </Text>
-
-          <Text style={{ fontWeight: "bold", marginTop: 10 }}>
-               Tickets disponibles:
-          </Text>
-
-          {ev.tickets?.map((t, idx) => (
-            <Text key={idx} style={{ marginLeft: 5 }}>
-              - {t.type}: ${t.price.toLocaleString()} ({t.available} disponibles)
-            </Text>
-          ))}
-        </View>
+      {filteredEvents.map(ev => (
+        <EventCard key={ev._id} ev={ev} />
       ))}
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+    container: { 
+        backgroundColor: "#f2f2f2", 
+        padding: 15 
+    },
+    headerTitle: { 
+        fontSize: 26, 
+        fontWeight: "bold", 
+        marginTop: 50, 
+        marginBottom: 20 
+    },
+    errorText: { 
+        color: "red", 
+        textAlign: 'center',
+        marginVertical: 20
+    },
+    noEventsText: {
+        textAlign: 'center',
+        color: '#666',
+        marginVertical: 20
+    },
+    loader: {
+        marginTop: 50
+    }
+});
