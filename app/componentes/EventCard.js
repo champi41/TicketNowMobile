@@ -1,11 +1,8 @@
-// app/componentes/EventCard.js
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 export default function EventCard({ ev }) {
-    // ... [Mismo código de estilos y renderizado que te proporcioné anteriormente] ...
     
-    // Función de ayuda para formatear la fecha
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString();
     };
@@ -33,7 +30,6 @@ export default function EventCard({ ev }) {
         </View>
     );
 }
-// ... [Estilos (styles) de EventCard.js] ...
 const styles = StyleSheet.create({
     card: {
         backgroundColor: "white",
