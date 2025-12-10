@@ -1,4 +1,4 @@
-
+// src/screens/CheckoutScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
@@ -9,8 +9,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Platform,  
   Alert,
+  Platform,
+  Linking,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -159,7 +160,27 @@ export default function CheckoutScreen() {
     setComprador((prev) => ({ ...prev, [campo]: valor }));
   };
 
-  // 4) Confirmar compra
+  // 4) Abrir ubicación en Google Maps
+  const abrirEnMapa = () => {
+    const query = evento?.location || evento?.name;
+    if (!query) {
+      Alert.alert(
+        "Sin ubicación",
+        "Este evento no tiene una dirección configurada."
+      );
+      return;
+    }
+
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      query
+    )}`;
+
+    Linking.openURL(url).catch(() => {
+      Alert.alert("Error", "No se pudo abrir Google Maps.");
+    });
+  };
+
+  // 5) Confirmar compra
   const confirmarCompra = async () => {
     if (!puedeConfirmar) return;
     if (!reserva) return;
@@ -370,8 +391,20 @@ export default function CheckoutScreen() {
                     { color: textoSecundario },
                   ]}
                 >
-                  {fechaEvento} — {evento.location}
+                  {fechaEvento}
+                  {evento.location ? ` — ${evento.location}` : ""}
                 </Text>
+
+                {evento.location && (
+                  <TouchableOpacity
+                    style={estilos.botonMapa}
+                    onPress={abrirEnMapa}
+                  >
+                    <Text style={estilos.textoBotonMapa}>
+                      Ver en el mapa
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           )}
@@ -514,9 +547,8 @@ const estilos = StyleSheet.create({
     paddingBottom: 120,
   },
   centro: {
-    flex: 1,
+    marginTop: 24,
     alignItems: "center",
-    justifyContent: "center",
   },
   titulo: {
     fontSize: 22,
@@ -572,6 +604,23 @@ const estilos = StyleSheet.create({
   detalleEvento: {
     fontSize: 13,
   },
+
+  // Botón "Ver en el mapa"
+  botonMapa: {
+    marginTop: 8,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#A855F7",
+  },
+  textoBotonMapa: {
+    color: "#A855F7",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
   filaItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -614,14 +663,13 @@ const estilos = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
   },
-    footer: {
+  footer: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    
-    paddingBottom: Platform.OS === "android" ? 28 : 12,
+    // separado de los 3 botones de Android
+    paddingBottom: Platform.OS === "android" ? 40 : 16,
     borderTopWidth: 1,
   },
-
   botonConfirmar: {
     backgroundColor: "#A855F7",
     paddingVertical: 14,

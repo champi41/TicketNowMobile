@@ -1,4 +1,4 @@
-
+// src/screens/HomeScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
@@ -142,16 +142,22 @@ export default function HomeScreen() {
               {fechaFormateada}
             </Text>
 
-            <Text
-              style={[estilos.enlaceTarjeta, { color: COLORES.morado }]}
+            {/* Botón para ver detalles del evento */}
+            <TouchableOpacity
+              style={[
+                estilos.botonDetalle,
+                { backgroundColor: COLORES.morado },
+              ]}
               onPress={() =>
                 navigation.navigate("EventDetail", {
                   eventId: item._id,
                 })
               }
             >
-              Ver detalle →
-            </Text>
+              <Text style={estilos.textoBotonDetalle}>
+                Ver detalles del evento
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -397,8 +403,16 @@ const estilos = StyleSheet.create({
   metaEtiqueta: {
     fontWeight: "700",
   },
-  enlaceTarjeta: {
+
+  // Botón "Ver detalles del evento"
+  botonDetalle: {
     marginTop: 10,
+    paddingVertical: 10,
+    borderRadius: 999,
+    alignItems: "center",
+  },
+  textoBotonDetalle: {
+    color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "700",
   },

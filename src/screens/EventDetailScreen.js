@@ -1,4 +1,4 @@
-
+// src/screens/EventDetailScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
@@ -11,100 +11,105 @@ import {
   Image,
   Platform,
 } from "react-native";
-
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { getEventDetails } from "../api/events";
 import { createReservation } from "../api/reservations";
 import { useThemeSettings } from "../context/ThemeContext";
 
-const formatCLP = (value) => {
-  if (typeof value !== "number" || Number.isNaN(value)) return "$0";
+const formatoCLP = (valor) => {
+  if (typeof valor !== "number" || Number.isNaN(valor)) return "$0";
   try {
-    return "$" + value.toLocaleString("es-CL") + " CLP";
+    return "$" + valor.toLocaleString("es-CL") + " CLP";
   } catch {
-    return "$" + value.toString() + " CLP";
+    return "$" + valor.toString() + " CLP";
   }
 };
 
 export default function EventDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { isDark } = useThemeSettings();
+  const { isDark: esOscuro } = useThemeSettings();
   const { eventId } = route.params || {};
 
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [evento, setEvento] = useState(null);
+  const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
-  const [qtyByType, setQtyByType] = useState({});
-  const [reserving, setReserving] = useState(false);
+  const [cantidadesPorTipo, setCantidadesPorTipo] = useState({});
+  const [reservando, setReservando] = useState(false);
 
+  // 1) Cargar datos del evento
   useEffect(() => {
     if (!eventId) return;
 
-    const fetchDetails = async () => {
+    const cargarDetalles = async () => {
       try {
-        setLoading(true);
+        setCargando(true);
         setError("");
         const data = await getEventDetails(eventId);
-        setEvent(data);
+        setEvento(data);
 
         if (data?.tickets && Array.isArray(data.tickets)) {
-          const init = {};
+          const inicial = {};
           data.tickets.forEach((t) => {
-            init[t.type] = 0;
+            inicial[t.type] = 0;
           });
-          setQtyByType(init);
+          setCantidadesPorTipo(inicial);
         } else {
-          setQtyByType({});
+          setCantidadesPorTipo({});
         }
       } catch (err) {
         console.error(err);
         setError("No se pudieron cargar los detalles del evento.");
       } finally {
-        setLoading(false);
+        setCargando(false);
       }
     };
 
-    fetchDetails();
+    cargarDetalles();
   }, [eventId]);
 
+  // 2) Totales
   const totalCLP = useMemo(() => {
-    if (!event?.tickets) return 0;
-    return event.tickets.reduce((acc, t) => {
-      const q = qtyByType[t.type] || 0;
-      const price = t.price || 0;
-      return acc + q * price;
+    if (!evento?.tickets) return 0;
+    return evento.tickets.reduce((acc, t) => {
+      const q = cantidadesPorTipo[t.type] || 0;
+      const precio = t.price || 0;
+      return acc + q * precio;
     }, 0);
-  }, [event, qtyByType]);
+  }, [evento, cantidadesPorTipo]);
 
-  const totalItems = useMemo(
+  const totalEntradas = useMemo(
     () =>
-      Object.values(qtyByType).reduce(
+      Object.values(cantidadesPorTipo).reduce(
         (acc, v) => acc + (typeof v === "number" ? v : 0),
         0
       ),
-    [qtyByType]
+    [cantidadesPorTipo]
   );
 
-  const setQty = (type, next) => {
-    if (!event?.tickets) return;
-    const ticket = event.tickets.find((t) => t.type === type);
+  // 3) Helpers para cantidades
+  const setCantidad = (tipo, siguiente) => {
+    if (!evento?.tickets) return;
+    const ticket = evento.tickets.find((t) => t.type === tipo);
     const max = Math.min(110, ticket?.available ?? 0);
 
-    const numericNext = Number.isFinite(next) ? next : 0;
-    const val = Math.max(0, Math.min(max, numericNext));
+    const num = Number.isFinite(siguiente) ? siguiente : 0;
+    const val = Math.max(0, Math.min(max, num));
 
-    setQtyByType((prev) => ({ ...prev, [type]: val }));
+    setCantidadesPorTipo((prev) => ({ ...prev, [tipo]: val }));
   };
 
-  const inc = (type) => setQty(type, (qtyByType[type] || 0) + 1);
-  const dec = (type) => setQty(type, (qtyByType[type] || 0) - 1);
+  const incrementar = (tipo) =>
+    setCantidad(tipo, (cantidadesPorTipo[tipo] || 0) + 1);
+  const decrementar = (tipo) =>
+    setCantidad(tipo, (cantidadesPorTipo[tipo] || 0) - 1);
 
-  const handleReserve = async () => {
-    if (!event?._id || !event?.tickets?.length) return;
+  // 4) Crear reserva y pasar a checkout
+  const manejarReserva = async () => {
+    if (!evento?._id || !evento?.tickets?.length) return;
 
-    const items = Object.entries(qtyByType)
-      .filter(([, quantity]) => quantity > 0)
+    const items = Object.entries(cantidadesPorTipo)
+      .filter(([, cantidad]) => cantidad > 0)
       .map(([type, quantity]) => ({ type, quantity }));
 
     if (items.length === 0) {
@@ -113,9 +118,9 @@ export default function EventDetailScreen() {
     }
 
     try {
-      setReserving(true);
+      setReservando(true);
       const res = await createReservation({
-        event_id: event._id,
+        event_id: evento._id,
         items,
       });
 
@@ -126,20 +131,22 @@ export default function EventDetailScreen() {
       console.error(err);
       alert(err.message || "No se pudo crear la reserva");
     } finally {
-      setReserving(false);
+      setReservando(false);
     }
   };
 
+  // ---- Distintos estados ----
+  const fondo = esOscuro ? "#020617" : "#F3F4F6";
+  const textoPrincipal = esOscuro ? "#F9FAFB" : "#111827";
+  const textoSecundario = esOscuro ? "#9CA3AF" : "#4B5563";
+  const fondoTarjeta = esOscuro ? "#0F172A" : "#FFFFFF";
+  const borde = esOscuro ? "#1F2937" : "#E5E7EB";
+
   if (!eventId) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          isDark && { backgroundColor: "#020617" },
-        ]}
-      >
-        <View style={styles.center}>
-          <Text style={[styles.error, isDark && { color: "#FCA5A5" }]}>
+      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+        <View style={estilos.centro}>
+          <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
             No se recibió el ID del evento.
           </Text>
         </View>
@@ -147,16 +154,11 @@ export default function EventDetailScreen() {
     );
   }
 
-  if (loading) {
+  if (cargando) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          isDark && { backgroundColor: "#020617" },
-        ]}
-      >
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#2563EB" />
+      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+        <View style={estilos.centro}>
+          <ActivityIndicator size="large" color="#A855F7" />
         </View>
       </SafeAreaView>
     );
@@ -164,14 +166,9 @@ export default function EventDetailScreen() {
 
   if (error) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          isDark && { backgroundColor: "#020617" },
-        ]}
-      >
-        <View style={styles.center}>
-          <Text style={[styles.error, isDark && { color: "#FCA5A5" }]}>
+      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+        <View style={estilos.centro}>
+          <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
             {error}
           </Text>
         </View>
@@ -179,16 +176,11 @@ export default function EventDetailScreen() {
     );
   }
 
-  if (!event) {
+  if (!evento) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          isDark && { backgroundColor: "#020617" },
-        ]}
-      >
-        <View style={styles.center}>
-          <Text style={[styles.error, isDark && { color: "#FCA5A5" }]}>
+      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+        <View style={estilos.centro}>
+          <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
             No se encontró el evento.
           </Text>
         </View>
@@ -197,129 +189,148 @@ export default function EventDetailScreen() {
   }
 
   let fechaLarga = "Fecha no disponible";
-  if (event.date) {
+  if (evento.date) {
     try {
-      fechaLarga = new Date(event.date).toLocaleString("es-CL", {
+      fechaLarga = new Date(evento.date).toLocaleString("es-CL", {
         dateStyle: "full",
         timeStyle: "short",
       });
     } catch {
-      fechaLarga = event.date;
+      fechaLarga = evento.date;
     }
   }
 
-  const tickets = Array.isArray(event.tickets) ? event.tickets : [];
-
-  const bgColor = isDark ? "#020617" : "#F3F4F6";
-  const textMain = isDark ? "#F9FAFB" : "#111827";
-  const textSub = isDark ? "#9CA3AF" : "#4B5563";
-  const cardBg = isDark ? "#0F172A" : "#FFFFFF";
-  const borderColor = isDark ? "#1F2937" : "#E5E7EB";
-
-  const imageUri =
-    event.image ||
+  const tickets = Array.isArray(evento.tickets) ? evento.tickets : [];
+  const urlImagen =
+    evento.image ||
     "https://placehold.co/800x400/111827/eeeeee?text=Evento";
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+      <ScrollView contentContainerStyle={estilos.contenido}>
         {/* IMAGEN PRINCIPAL */}
         <Image
-          source={{ uri: imageUri }}
-          style={styles.headerImage}
+          source={{ uri: urlImagen }}
+          style={estilos.imagenEncabezado}
           resizeMode="cover"
         />
 
         {/* Información general */}
-        <Text style={[styles.title, { color: textMain }]}>{event.name}</Text>
-        <Text style={[styles.info, { color: textSub }]}>{fechaLarga}</Text>
-        <Text style={[styles.info, { color: textSub }]}>{event.location}</Text>
-        {event.category && (
-          <Text style={[styles.info, { color: textSub }]}>
-            Categoría: {event.category}
+        <Text style={[estilos.titulo, { color: textoPrincipal }]}>
+          {evento.name}
+        </Text>
+        <Text style={[estilos.info, { color: textoSecundario }]}>
+          {fechaLarga}
+        </Text>
+        <Text style={[estilos.info, { color: textoSecundario }]}>
+          {evento.location}
+        </Text>
+        {evento.category && (
+          <Text style={[estilos.info, { color: textoSecundario }]}>
+            Categoría: {evento.category}
           </Text>
         )}
 
         {/* Descripción */}
-        <Text style={[styles.sectionTitle, { color: textMain }]}>
+        <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
           Descripción
         </Text>
-        <Text style={[styles.paragraph, { color: textSub }]}>
-          {event.description || "Este evento aún no tiene descripción."}
+        <Text style={[estilos.parrafo, { color: textoSecundario }]}>
+          {evento.description || "Este evento aún no tiene descripción."}
         </Text>
 
         {/* Entradas */}
-        <Text style={[styles.sectionTitle, { color: textMain }]}>
+        <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
           Selecciona tus entradas
         </Text>
 
         {tickets.length === 0 ? (
-          <Text style={[styles.paragraph, { color: textSub }]}>
+          <Text style={[estilos.parrafo, { color: textoSecundario }]}>
             Este evento no tiene tipos de entradas configurados.
           </Text>
         ) : (
-          <View style={styles.ticketList}>
+          <View style={estilos.listaTickets}>
             {tickets.map((t) => {
-              const q = qtyByType[t.type] || 0;
+              const q = cantidadesPorTipo[t.type] || 0;
               const max = Math.min(110, t.available ?? 0);
 
               return (
                 <View
                   key={t.type}
                   style={[
-                    styles.ticketRow,
-                    { backgroundColor: cardBg, borderColor },
+                    estilos.filaTicket,
+                    { backgroundColor: fondoTarjeta, borderColor: borde },
                   ]}
                 >
-                  <View style={styles.ticketMeta}>
-                    <Text style={[styles.ticketName, { color: textMain }]}>
+                  <View style={estilos.metaTicket}>
+                    <Text
+                      style={[
+                        estilos.nombreTicket,
+                        { color: textoPrincipal },
+                      ]}
+                    >
                       {t.type}
                     </Text>
-                    <Text style={[styles.ticketPrice, { color: "#2563EB" }]}>
-                      {formatCLP(t.price || 0)}
+                    <Text
+                      style={[
+                        estilos.precioTicket,
+                        { color: "#A855F7" },
+                      ]}
+                    >
+                      {formatoCLP(t.price || 0)}
                     </Text>
-                    <Text style={[styles.ticketStock, { color: textSub }]}>
+                    <Text
+                      style={[
+                        estilos.stockTicket,
+                        { color: textoSecundario },
+                      ]}
+                    >
                       Disponibles: {t.available} (máx. {max})
                     </Text>
                   </View>
 
-                  <View style={styles.qtyControls}>
+                  <View style={estilos.controlesCantidad}>
                     <TouchableOpacity
                       style={[
-                        styles.qtyButton,
-                        { borderColor },
-                        q <= 0 && styles.qtyButtonDisabled,
+                        estilos.botonCantidad,
+                        { borderColor: borde },
+                        q <= 0 && estilos.botonCantidadDeshabilitado,
                       ]}
-                      onPress={() => dec(t.type)}
+                      onPress={() => decrementar(t.type)}
                       disabled={q <= 0}
                     >
                       <Text
                         style={[
-                          styles.qtyButtonText,
-                          { color: textMain },
+                          estilos.textoBotonCantidad,
+                          { color: textoPrincipal },
                         ]}
                       >
                         −
                       </Text>
                     </TouchableOpacity>
 
-                    <Text style={[styles.qtyText, { color: textMain }]}>
+                    <Text
+                      style={[
+                        estilos.textoCantidad,
+                        { color: textoPrincipal },
+                      ]}
+                    >
                       {q}
                     </Text>
 
                     <TouchableOpacity
                       style={[
-                        styles.qtyButton,
-                        { borderColor },
-                        q >= max && styles.qtyButtonDisabled,
+                        estilos.botonCantidad,
+                        { borderColor: borde },
+                        q >= max && estilos.botonCantidadDeshabilitado,
                       ]}
-                      onPress={() => inc(t.type)}
+                      onPress={() => incrementar(t.type)}
                       disabled={q >= max}
                     >
                       <Text
                         style={[
-                          styles.qtyButtonText,
-                          { color: textMain },
+                          estilos.textoBotonCantidad,
+                          { color: textoPrincipal },
                         ]}
                       >
                         +
@@ -335,82 +346,47 @@ export default function EventDetailScreen() {
         {/* Totales */}
         <View
           style={[
-            styles.totalsBox,
-            { backgroundColor: cardBg, borderColor },
+            estilos.cajaTotales,
+            { backgroundColor: fondoTarjeta, borderColor: borde },
           ]}
         >
-          <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: textSub }]}>
+          <View style={estilos.filaTotal}>
+            <Text style={[estilos.etiquetaTotal, { color: textoSecundario }]}>
               Total entradas
             </Text>
-            <Text style={[styles.totalValue, { color: textMain }]}>
-              {totalItems}
+            <Text style={[estilos.valorTotal, { color: textoPrincipal }]}>
+              {totalEntradas}
             </Text>
           </View>
-          <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: textSub }]}>
+          <View style={estilos.filaTotal}>
+            <Text style={[estilos.etiquetaTotal, { color: textoSecundario }]}>
               Total a pagar
             </Text>
-            <Text style={[styles.totalValue, { color: textMain }]}>
-              {formatCLP(totalCLP)}
+            <Text style={[estilos.valorTotal, { color: textoPrincipal }]}>
+              {formatoCLP(totalCLP)}
             </Text>
           </View>
         </View>
       </ScrollView>
 
-      {/* Footer con Home + Settings + Reservar */}
+      {/* SOLO botón grande de reservar abajo */}
       <View
         style={[
-          styles.footer,
-          { backgroundColor: isDark ? "#020617" : "#F9FAFB", borderColor },
+          estilos.footer,
+          { backgroundColor: fondo, borderTopColor: borde },
         ]}
       >
-        <View style={styles.bottomNavRow}>
-          <TouchableOpacity
-            style={[
-              styles.navButton,
-              { borderColor, backgroundColor: cardBg },
-            ]}
-            onPress={() => navigation.navigate("Home")}
-          >
-            <Text
-              style={[
-                styles.navButtonText,
-                { color: textMain },
-              ]}
-            >
-              Home
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.navButton,
-              { borderColor, backgroundColor: cardBg },
-            ]}
-            onPress={() => navigation.navigate("Settings")}
-          >
-            <Text
-              style={[
-                styles.navButtonText,
-                { color: textMain },
-              ]}
-            >
-              Settings
-            </Text>
-          </TouchableOpacity>
-        </View>
-
         <TouchableOpacity
           style={[
-            styles.buyButton,
-            (totalItems === 0 || reserving) && styles.buyButtonDisabled,
+            estilos.botonReservar,
+            (totalEntradas === 0 || reservando) &&
+              estilos.botonReservarDeshabilitado,
           ]}
-          onPress={handleReserve}
-          disabled={totalItems === 0 || reserving}
+          onPress={manejarReserva}
+          disabled={totalEntradas === 0 || reservando}
         >
-          <Text style={styles.buyButtonText}>
-            {reserving ? "Reservando..." : "Reservar entradas"}
+          <Text style={estilos.textoBotonReservar}>
+            {reservando ? "Reservando..." : "Reservar entradas"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -418,43 +394,48 @@ export default function EventDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
+const estilos = StyleSheet.create({
+  contenedor: { flex: 1 },
+  contenido: {
     padding: 20,
     paddingBottom: 150,
   },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  error: { color: "crimson", fontSize: 16, textAlign: "center", padding: 20 },
-  headerImage: {
+  centro: { flex: 1, alignItems: "center", justifyContent: "center" },
+  textoError: {
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  imagenEncabezado: {
     width: "100%",
     height: 180,
     borderRadius: 16,
     marginBottom: 16,
     backgroundColor: "#111827",
   },
-  title: {
+  titulo: {
     fontSize: 24,
     fontWeight: "700",
     marginBottom: 8,
   },
   info: { fontSize: 14, marginBottom: 4 },
-  sectionTitle: {
+  subtitulo: {
     marginTop: 24,
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 8,
   },
-  paragraph: {
+  parrafo: {
     fontSize: 14,
     lineHeight: 20,
   },
 
-  ticketList: {
+  listaTickets: {
     marginTop: 8,
     gap: 12,
   },
-  ticketRow: {
+  filaTicket: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -462,29 +443,29 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  ticketMeta: {
+  metaTicket: {
     flex: 1,
     paddingRight: 8,
   },
-  ticketName: {
+  nombreTicket: {
     fontSize: 16,
     fontWeight: "600",
   },
-  ticketPrice: {
+  precioTicket: {
     fontSize: 14,
     fontWeight: "500",
     marginTop: 2,
   },
-  ticketStock: {
+  stockTicket: {
     fontSize: 12,
     marginTop: 2,
   },
-  qtyControls: {
+  controlesCantidad: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  qtyButton: {
+  botonCantidad: {
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -492,74 +473,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  qtyButtonDisabled: {
+  botonCantidadDeshabilitado: {
     opacity: 0.4,
   },
-  qtyButtonText: {
+  textoBotonCantidad: {
     fontSize: 18,
     fontWeight: "700",
   },
-  qtyText: {
+  textoCantidad: {
     minWidth: 24,
     textAlign: "center",
     fontSize: 16,
     fontWeight: "600",
   },
 
-  totalsBox: {
+  cajaTotales: {
     marginTop: 24,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
   },
-  totalRow: {
+  filaTotal: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 6,
   },
-  totalLabel: {
+  etiquetaTotal: {
     fontSize: 14,
   },
-  totalValue: {
+  valorTotal: {
     fontSize: 16,
     fontWeight: "600",
   },
 
- footer: {
+  footer: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: Platform.OS === "android" ? 45 : 13,
+    paddingBottom: Platform.OS === "android" ? 40 : 16,
     borderTopWidth: 1,
   },
-  bottomNavRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-    gap: 12,
-  },
-  navButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: "center",
-  },
-  navButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  buyButton: {
-    backgroundColor: "#2563EB",
+  botonReservar: {
+    backgroundColor: "#A855F7",
     paddingVertical: 14,
     borderRadius: 999,
     alignItems: "center",
   },
-  buyButtonDisabled: {
+  botonReservarDeshabilitado: {
     opacity: 0.6,
   },
-  buyButtonText: {
+  textoBotonReservar: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
   },
 });
