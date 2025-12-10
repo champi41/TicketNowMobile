@@ -6486,6 +6486,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ticketnow@workspace:."
   dependencies:
+    "@expo/vector-icons": "npm:^15.0.3"
     "@react-native-async-storage/async-storage": "npm:^2.2.0"
     "@react-navigation/native": "npm:^7.1.25"
     "@react-navigation/native-stack": "npm:^7.8.6"

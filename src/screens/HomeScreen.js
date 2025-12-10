@@ -11,10 +11,12 @@ import {
   ActivityIndicator,
   Image,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getEvents } from "../api/events";
 import { useThemeSettings } from "../context/ThemeContext";
+import BottomMenu from "../components/BottomMenu";
 
 const { width } = Dimensions.get("window");
 const ANCHO_TARJETA = width - 32; // margen horizontal de 16 a cada lado
@@ -34,7 +36,7 @@ export default function HomeScreen() {
     textoPrincipal: esOscuro ? "#F9FAFB" : "#1F2933",
     textoSecundario: esOscuro ? "#E5E7EB" : "#4B5563",
     morado: "#A855F7",
-    moradoSuave: "#E9D5FF",
+    moradoSuave: "#ffffffff",
     bordeMorado: "#C4B5FD",
     fondoTarjeta: esOscuro ? "#020617" : "#FFFFFF",
     sombraTarjeta: "#000000",
@@ -144,10 +146,7 @@ export default function HomeScreen() {
 
             {/* Botón para ver detalles del evento */}
             <TouchableOpacity
-              style={[
-                estilos.botonDetalle,
-                { backgroundColor: COLORES.morado },
-              ]}
+              style={estilos.botonDetalle}
               onPress={() =>
                 navigation.navigate("EventDetail", {
                   eventId: item._id,
@@ -168,116 +167,122 @@ export default function HomeScreen() {
     <SafeAreaView
       style={[estilos.contenedorPantalla, { backgroundColor: COLORES.fondo }]}
     >
-      {/* ENCABEZADO */}
-      <View style={estilos.encabezado}>
-        {/* Fila superior: título + interruptor tema */}
-        <View style={estilos.encabezadoFilaSuperior}>
-          <Text
-            style={[
-              estilos.textoLogo,
-              { color: COLORES.morado },
-            ]}
-          >
-            TicketNow
-          </Text>
-
-          {/* Interruptor modo claro/oscuro (simple, sin neón) */}
-          <TouchableOpacity
-            onPress={() => setEsOscuro(!esOscuro)}
-            style={[
-              estilos.interruptorTema,
-              {
-                backgroundColor: esOscuro ? "#111827" : COLORES.moradoSuave,
-                borderColor: COLORES.bordeMorado,
-              },
-            ]}
-          >
-            <View
-              style={[
-                estilos.perillaTema,
-                {
-                  transform: [{ translateX: esOscuro ? 18 : 0 }],
-                  backgroundColor: COLORES.morado,
-                },
-              ]}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Botones: Eventos / Compras */}
-        <View style={estilos.encabezadoFilaBotones}>
-          <TouchableOpacity
-            style={[
-              estilos.botonSegmento,
-              {
-                backgroundColor: COLORES.morado,
-                borderColor: COLORES.morado,
-              },
-            ]}
-          >
-            <Text style={estilos.textoBotonSegmentoActivo}>Eventos</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              estilos.botonSegmento,
-              {
-                backgroundColor: "transparent",
-                borderColor: COLORES.bordeMorado,
-              },
-            ]}
-            onPress={() => navigation.navigate("Purchases")}
-          >
+      {/* CONTENIDO PRINCIPAL */}
+      <View style={{ flex: 1 }}>
+        {/* ENCABEZADO */}
+        <View style={estilos.encabezado}>
+          {/* Fila superior: título + interruptor tema */}
+          <View style={estilos.encabezadoFilaSuperior}>
             <Text
               style={[
-                estilos.textoBotonSegmento,
+                estilos.textoLogo,
                 { color: COLORES.morado },
               ]}
             >
-              Compras
+              TicketNow
             </Text>
-          </TouchableOpacity>
+
+            {/* Interruptor modo claro/oscuro */}
+            <TouchableOpacity
+              onPress={() => setEsOscuro(!esOscuro)}
+              style={[
+                estilos.interruptorTema,
+                {
+                  backgroundColor: esOscuro ? "#111827" : COLORES.moradoSuave,
+                  borderColor: COLORES.bordeMorado,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  estilos.perillaTema,
+                  {
+                    transform: [{ translateX: esOscuro ? 18 : 0 }],
+                    backgroundColor: COLORES.morado,
+                  },
+                ]}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Botones: Eventos / Compras */}
+          <View style={estilos.encabezadoFilaBotones}>
+            <TouchableOpacity
+              style={[
+                estilos.botonSegmento,
+                {
+                  backgroundColor: COLORES.morado,
+                  borderColor: COLORES.morado,
+                },
+              ]}
+            >
+              <Text style={estilos.textoBotonSegmentoActivo}>Eventos</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                estilos.botonSegmento,
+                {
+                  backgroundColor: "transparent",
+                  borderColor: COLORES.bordeMorado,
+                },
+              ]}
+              onPress={() => navigation.navigate("Purchases")}
+            >
+              <Text
+                style={[
+                  estilos.textoBotonSegmento,
+                  { color: COLORES.morado },
+                ]}
+              >
+                Compras
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* BUSCADOR */}
+        <View style={estilos.contenedorBuscador}>
+          <TextInput
+            style={[
+              estilos.buscador,
+              {
+                backgroundColor: COLORES.moradoSuave,
+                borderColor: COLORES.bordeMorado,
+                color: COLORES.textoPrincipal,
+              },
+            ]}
+            placeholder="Buscar evento..."
+            placeholderTextColor="#D4B3FF"
+            value={textoBusqueda}
+            onChangeText={setTextoBusqueda}
+          />
+        </View>
+
+        {/* CONTENIDO */}
+        {cargando && (
+          <View style={{ marginTop: 40 }}>
+            <ActivityIndicator size="large" color={COLORES.morado} />
+          </View>
+        )}
+
+        {error ? (
+          <View style={{ marginTop: 20, paddingHorizontal: 20 }}>
+            <Text style={{ color: "crimson" }}>{error}</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={eventosFiltrados}
+            renderItem={renderizarItem}
+            keyExtractor={(item) => String(item._id)}
+            contentContainerStyle={estilos.contenidoLista}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
 
-      {/* BUSCADOR */}
-      <View style={estilos.contenedorBuscador}>
-        <TextInput
-          style={[
-            estilos.buscador,
-            {
-              backgroundColor: COLORES.moradoSuave,
-              borderColor: COLORES.bordeMorado,
-              color: COLORES.textoPrincipal,
-            },
-          ]}
-          placeholder="Buscar evento..."
-          placeholderTextColor="#D4B3FF"
-          value={textoBusqueda}
-          onChangeText={setTextoBusqueda}
-        />
-      </View>
-
-      {/* CONTENIDO */}
-      {cargando && (
-        <View style={{ marginTop: 40 }}>
-          <ActivityIndicator size="large" color={COLORES.morado} />
-        </View>
-      )}
-
-      {error ? (
-        <View style={{ marginTop: 20, paddingHorizontal: 20 }}>
-          <Text style={{ color: "crimson" }}>{error}</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={eventosFiltrados}
-          renderItem={renderizarItem}
-          keyExtractor={(item) => String(item._id)}
-          contentContainerStyle={estilos.contenidoLista}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      {/* MENÚ INFERIOR */}
+      <BottomMenu active="home" />
     </SafeAreaView>
   );
 }
@@ -305,20 +310,7 @@ const estilos = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Interruptor tema
-  interruptorTema: {
-    width: 46,
-    height: 24,
-    borderRadius: 999,
-    borderWidth: 1,
-    padding: 2,
-    justifyContent: "center",
-  },
-  perillaTema: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
+  
 
   // Botones de segmento (Eventos / Compras)
   encabezadoFilaBotones: {
@@ -363,7 +355,7 @@ const estilos = StyleSheet.create({
   contenidoLista: {
     paddingHorizontal: 8,
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: Platform.OS === "android" ? 40 : 24,
   },
   contenedorTarjeta: {
     alignItems: "center",
@@ -410,6 +402,7 @@ const estilos = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 999,
     alignItems: "center",
+    backgroundColor: "#A855F7",
   },
   textoBotonDetalle: {
     color: "#FFFFFF",

@@ -1,4 +1,4 @@
-
+// src/screens/PurchasesScreen.js
 import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
@@ -11,6 +11,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPurchase } from "../api/purchases";
 import { useThemeSettings } from "../context/ThemeContext";
+import BottomMenu from "../components/BottomMenu";
 
 function formatoCLP(n) {
   const num = Number(n || 0);
@@ -91,169 +92,189 @@ export default function PurchasesScreen() {
     <SafeAreaView
       style={[estilos.contenedor, { backgroundColor: fondo }]}
     >
-      <ScrollView contentContainerStyle={estilos.scrollContenido}>
-        <Text style={[estilos.titulo, { color: textoPrincipal }]}>
-          Historial de compras
-        </Text>
-
-        {cargando && (
-          <View style={estilos.centro}>
-            <ActivityIndicator size="large" color="#A855F7" />
-            <Text
-              style={[estilos.textoSecundario, { color: textoSecundario }]}
-            >
-              Cargando compras…
-            </Text>
-          </View>
-        )}
-
-        {!cargando && !ids.length && (
-          <Text
-            style={[
-              estilos.textoSecundario,
-              { color: textoSecundario, marginTop: 16 },
-            ]}
-          >
-            Aún no tienes compras registradas en este dispositivo.
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={estilos.scrollContenido}>
+          <Text style={[estilos.titulo, { color: textoPrincipal }]}>
+            Historial de compras
           </Text>
-        )}
 
-        {!cargando &&
-          compras.map((p) => {
-            const id = p._id || p.id || "—";
-
-            // Evento asociado (si viene en la compra)
-            const nombreEvento =
-              p.event?.name || p.event_name || "Evento sin nombre";
-
-            let fechaCompra = "";
-            if (p.created_at) {
-              try {
-                fechaCompra = new Date(p.created_at).toLocaleString(
-                  "es-CL",
-                  {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  }
-                );
-              } catch {
-                fechaCompra = p.created_at;
-              }
-            }
-
-            const estado = p.status || "CONFIRMED";
-            let etiquetaEstado = estado;
-            if (estado === "PENDING") etiquetaEstado = "Pendiente";
-            if (estado === "CONFIRMED") etiquetaEstado = "Confirmada";
-
-            const total =
-              p.total_price ??
-              (Array.isArray(p.items)
-                ? p.items.reduce(
-                    (acc, it) => acc + Number(it.subtotal || 0),
-                    0
-                  )
-                : 0);
-
-            const tickets = Array.isArray(p.tickets)
-              ? p.tickets
-              : Array.isArray(p.items)
-              ? p.items
-              : [];
-
-            return (
-              <View
-                key={id}
+          {cargando && (
+            <View style={estilos.centro}>
+              <ActivityIndicator size="large" color="#A855F7" />
+              <Text
                 style={[
-                  estilos.tarjeta,
-                  { backgroundColor: tarjeta, borderColor: borde },
+                  estilos.textoSecundario,
+                  { color: textoSecundario },
                 ]}
               >
-                <Text
-                  style={[
-                    estilos.subtitulo,
-                    { color: textoPrincipal },
-                  ]}
-                >
-                  Compra #{p.nro_compra || id}
-                </Text>
+                Cargando compras…
+              </Text>
+            </View>
+          )}
 
-                <Text
+          {!cargando && !ids.length && (
+            <Text
+              style={[
+                estilos.textoSecundario,
+                { color: textoSecundario, marginTop: 16 },
+              ]}
+            >
+              Aún no tienes compras registradas en este dispositivo.
+            </Text>
+          )}
+
+          {!cargando &&
+            compras.map((p) => {
+              const id = p._id || p.id || "—";
+
+              // Evento asociado (si viene en la compra)
+              const nombreEvento =
+                p.event?.name || p.event_name || "Evento sin nombre";
+
+              let fechaCompra = "";
+              if (p.created_at) {
+                try {
+                  fechaCompra = new Date(p.created_at).toLocaleString(
+                    "es-CL",
+                    {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }
+                  );
+                } catch {
+                  fechaCompra = p.created_at;
+                }
+              }
+
+              const estado = p.status || "CONFIRMED";
+              let etiquetaEstado = estado;
+              if (estado === "PENDING") etiquetaEstado = "Pendiente";
+              if (estado === "CONFIRMED") etiquetaEstado = "Confirmada";
+
+              const total =
+                p.total_price ??
+                (Array.isArray(p.items)
+                  ? p.items.reduce(
+                      (acc, it) => acc + Number(it.subtotal || 0),
+                      0
+                    )
+                  : 0);
+
+              const tickets = Array.isArray(p.tickets)
+                ? p.tickets
+                : Array.isArray(p.items)
+                ? p.items
+                : [];
+
+              return (
+                <View
+                  key={id}
                   style={[
-                    estilos.textoSecundario,
-                    { color: textoSecundario },
+                    estilos.tarjeta,
+                    { backgroundColor: tarjeta, borderColor: borde },
                   ]}
                 >
-                  Evento:{" "}
-                  <Text style={{ fontWeight: "600", color: textoPrincipal }}>
-                    {nombreEvento}
+                  <Text
+                    style={[
+                      estilos.subtitulo,
+                      { color: textoPrincipal },
+                    ]}
+                  >
+                    Compra #{p.nro_compra || id}
                   </Text>
-                </Text>
 
-                {fechaCompra ? (
                   <Text
                     style={[
                       estilos.textoSecundario,
                       { color: textoSecundario },
                     ]}
                   >
-                    Fecha compra: {fechaCompra}
+                    Evento:{" "}
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        color: textoPrincipal,
+                      }}
+                    >
+                      {nombreEvento}
+                    </Text>
                   </Text>
-                ) : null}
 
-                <Text
-                  style={[
-                    estilos.textoSecundario,
-                    { color: textoSecundario },
-                  ]}
-                >
-                  Estado:{" "}
-                  <Text style={{ fontWeight: "600", color: textoPrincipal }}>
-                    {etiquetaEstado}
-                  </Text>
-                </Text>
-
-                <Text
-                  style={[
-                    estilos.textoTotal,
-                    { color: textoPrincipal },
-                  ]}
-                >
-                  Total: {formatoCLP(total)}
-                </Text>
-
-                {tickets.length > 0 && (
-                  <View style={{ marginTop: 8 }}>
+                  {fechaCompra ? (
                     <Text
                       style={[
                         estilos.textoSecundario,
-                        { color: textoSecundario, marginBottom: 4 },
+                        { color: textoSecundario },
                       ]}
                     >
-                      Entradas:
+                      Fecha compra: {fechaCompra}
                     </Text>
-                    {tickets.map((t, idx) => (
+                  ) : null}
+
+                  <Text
+                    style={[
+                      estilos.textoSecundario,
+                      { color: textoSecundario },
+                    ]}
+                  >
+                    Estado:{" "}
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        color: textoPrincipal,
+                      }}
+                    >
+                      {etiquetaEstado}
+                    </Text>
+                  </Text>
+
+                  <Text
+                    style={[
+                      estilos.textoTotal,
+                      { color: textoPrincipal },
+                    ]}
+                  >
+                    Total: {formatoCLP(total)}
+                  </Text>
+
+                  {tickets.length > 0 && (
+                    <View style={{ marginTop: 8 }}>
                       <Text
-                        key={t.code || `${id}-${idx}`}
                         style={[
-                          estilos.textoEntrada,
-                          { color: textoSecundario },
+                          estilos.textoSecundario,
+                          {
+                            color: textoSecundario,
+                            marginBottom: 4,
+                          },
                         ]}
                       >
-                        {t.type || t.ticket_type || "Entrada"} —{" "}
-                        {t.code && (
-                          <Text style={{ fontWeight: "600" }}>
-                            Código: {t.code}
-                          </Text>
-                        )}
+                        Entradas:
                       </Text>
-                    ))}
-                  </View>
-                )}
-              </View>
-            );
-          })}
-      </ScrollView>
+                      {tickets.map((t, idx) => (
+                        <Text
+                          key={t.code || `${id}-${idx}`}
+                          style={[
+                            estilos.textoEntrada,
+                            { color: textoSecundario },
+                          ]}
+                        >
+                          {t.type || t.ticket_type || "Entrada"} —{" "}
+                          {t.code && (
+                            <Text style={{ fontWeight: "600" }}>
+                              Código: {t.code}
+                            </Text>
+                          )}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+        </ScrollView>
+      </View>
+
+      <BottomMenu active="home" />
     </SafeAreaView>
   );
 }

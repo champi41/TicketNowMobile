@@ -20,6 +20,7 @@ import { getReservation } from "../api/reservations";
 import { getEventDetails } from "../api/events";
 import { checkout } from "../api/checkout";
 import { useThemeSettings } from "../context/ThemeContext";
+import BottomMenu from "../components/BottomMenu";
 
 function formatoCLP(n) {
   const num = Number(n || 0);
@@ -297,244 +298,251 @@ export default function CheckoutScreen() {
     <SafeAreaView
       style={[estilos.contenedor, { backgroundColor: fondo }]}
     >
-      <ScrollView contentContainerStyle={estilos.scrollContenido}>
-        <Text style={[estilos.titulo, { color: textoPrincipal }]}>
-          Checkout
-        </Text>
-
-        {/* Resumen de reserva */}
-        <View
-          style={[
-            estilos.tarjeta,
-            { backgroundColor: tarjeta, borderColor: borde },
-          ]}
-        >
-          <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-            Resumen de la reserva
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={estilos.scrollContenido}>
+          <Text style={[estilos.titulo, { color: textoPrincipal }]}>
+            Checkout
           </Text>
 
-          <View style={estilos.fila}>
-            <Text style={[estilos.etiqueta, { color: textoSecundario }]}>
-              Estado:
-            </Text>
-            <Text style={[estilos.valor, { color: textoPrincipal }]}>
-              {etiquetaEstado}
-            </Text>
-          </View>
-
-          {reserva.created_at && (
-            <View style={estilos.fila}>
-              <Text
-                style={[estilos.etiqueta, { color: textoSecundario }]}
-              >
-                Creada:
-              </Text>
-              <Text style={[estilos.valor, { color: textoPrincipal }]}>
-                {new Date(reserva.created_at).toLocaleString("es-CL", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
-              </Text>
-            </View>
-          )}
-
-          {segundosRestantes != null && !expirada && (
-            <View style={estilos.fila}>
-              <Text
-                style={[estilos.etiqueta, { color: textoSecundario }]}
-              >
-                Reserva válida por:
-              </Text>
-              <Text
-                style={[
-                  estilos.valor,
-                  estilos.contenedorCountdown,
-                  { color: textoPrincipal },
-                ]}
-              >
-                {minutos.toString().padStart(2, "0")}:
-                {segundos.toString().padStart(2, "0")} min
-              </Text>
-            </View>
-          )}
-
-          {expirada && (
-            <Text style={[estilos.textoError, { marginTop: 8 }]}>
-              La reserva expiró. Vuelve al listado de eventos y genera
-              una nueva.
-            </Text>
-          )}
-
-          {/* Evento */}
-          {evento && (
-            <>
-              <Text
-                style={[
-                  estilos.subtituloPequeño,
-                  { color: textoPrincipal },
-                ]}
-              >
-                Evento
-              </Text>
-              <View style={estilos.itemEvento}>
-                <Text
-                  style={[
-                    estilos.nombreEvento,
-                    { color: textoPrincipal },
-                  ]}
-                >
-                  {evento.name}
-                </Text>
-                <Text
-                  style={[
-                    estilos.detalleEvento,
-                    { color: textoSecundario },
-                  ]}
-                >
-                  {fechaEvento}
-                  {evento.location ? ` — ${evento.location}` : ""}
-                </Text>
-
-                {evento.location && (
-                  <TouchableOpacity
-                    style={estilos.botonMapa}
-                    onPress={abrirEnMapa}
-                  >
-                    <Text style={estilos.textoBotonMapa}>
-                      Ver en el mapa
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </>
-          )}
-
-          {/* Ítems */}
-          <Text
+          {/* Resumen de reserva */}
+          <View
             style={[
-              estilos.subtituloPequeño,
-              { color: textoPrincipal },
+              estilos.tarjeta,
+              { backgroundColor: tarjeta, borderColor: borde },
             ]}
           >
-            Entradas
-          </Text>
-          {itemsMostrar.map((it) => (
-            <View key={it.tipo} style={estilos.filaItem}>
-              <View>
+            <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
+              Resumen de la reserva
+            </Text>
+
+            <View style={estilos.fila}>
+              <Text style={[estilos.etiqueta, { color: textoSecundario }]}>
+                Estado:
+              </Text>
+              <Text style={[estilos.valor, { color: textoPrincipal }]}>
+                {etiquetaEstado}
+              </Text>
+            </View>
+
+            {reserva.created_at && (
+              <View style={estilos.fila}>
+                <Text
+                  style={[estilos.etiqueta, { color: textoSecundario }]}
+                >
+                  Creada:
+                </Text>
+                <Text style={[estilos.valor, { color: textoPrincipal }]}>
+                  {new Date(reserva.created_at).toLocaleString("es-CL", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </Text>
+              </View>
+            )}
+
+            {segundosRestantes != null && !expirada && (
+              <View style={estilos.fila}>
+                <Text
+                  style={[estilos.etiqueta, { color: textoSecundario }]}
+                >
+                  Reserva válida por:
+                </Text>
                 <Text
                   style={[
-                    estilos.tipoEntrada,
+                    estilos.valor,
+                    estilos.contenedorCountdown,
                     { color: textoPrincipal },
                   ]}
                 >
-                  {it.cantidad}× {it.tipo}
-                </Text>
-                <Text
-                  style={[
-                    estilos.detalleEvento,
-                    { color: textoSecundario },
-                  ]}
-                >
-                  {formatoCLP(it.precioUnidad)} c/u
+                  {minutos.toString().padStart(2, "0")}:
+                  {segundos.toString().padStart(2, "0")} min
                 </Text>
               </View>
+            )}
+
+            {expirada && (
+              <Text style={[estilos.textoError, { marginTop: 8 }]}>
+                La reserva expiró. Vuelve al listado de eventos y genera
+                una nueva.
+              </Text>
+            )}
+
+            {/* Evento */}
+            {evento && (
+              <>
+                <Text
+                  style={[
+                    estilos.subtituloPequeño,
+                    { color: textoPrincipal },
+                  ]}
+                >
+                  Evento
+                </Text>
+                <View style={estilos.itemEvento}>
+                  <Text
+                    style={[
+                      estilos.nombreEvento,
+                      { color: textoPrincipal },
+                    ]}
+                  >
+                    {evento.name}
+                  </Text>
+                  <Text
+                    style={[
+                      estilos.detalleEvento,
+                      { color: textoSecundario },
+                    ]}
+                  >
+                    {fechaEvento}
+                    {evento.location ? ` — ${evento.location}` : ""}
+                  </Text>
+
+                  {evento.location && (
+                    <TouchableOpacity
+                      style={estilos.botonMapa}
+                      onPress={abrirEnMapa}
+                    >
+                      <Text style={estilos.textoBotonMapa}>
+                        Ver en el mapa
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </>
+            )}
+
+            {/* Ítems */}
+            <Text
+              style={[
+                estilos.subtituloPequeño,
+                { color: textoPrincipal },
+              ]}
+            >
+              Entradas
+            </Text>
+            {itemsMostrar.map((it) => (
+              <View key={it.tipo} style={estilos.filaItem}>
+                <View>
+                  <Text
+                    style={[
+                      estilos.tipoEntrada,
+                      { color: textoPrincipal },
+                    ]}
+                  >
+                    {it.cantidad}× {it.tipo}
+                  </Text>
+                  <Text
+                    style={[
+                      estilos.detalleEvento,
+                      { color: textoSecundario },
+                    ]}
+                  >
+                    {formatoCLP(it.precioUnidad)} c/u
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    estilos.subtotal,
+                    { color: textoPrincipal },
+                  ]}
+                >
+                  {formatoCLP(it.subtotal)}
+                </Text>
+              </View>
+            ))}
+
+            {/* Total */}
+            <View style={estilos.filaTotal}>
               <Text
-                style={[
-                  estilos.subtotal,
-                  { color: textoPrincipal },
-                ]}
+                style={[estilos.etiquetaTotal, { color: textoSecundario }]}
               >
-                {formatoCLP(it.subtotal)}
+                Total a pagar
+              </Text>
+              <Text
+                style={[estilos.valorTotal, { color: textoPrincipal }]}
+              >
+                {formatoCLP(totalMostrar)}
               </Text>
             </View>
-          ))}
+          </View>
 
-          {/* Total */}
-          <View style={estilos.filaTotal}>
-            <Text style={[estilos.etiquetaTotal, { color: textoSecundario }]}>
-              Total a pagar
+          {/* Datos del comprador */}
+          <View
+            style={[
+              estilos.tarjeta,
+              { backgroundColor: tarjeta, borderColor: borde },
+            ]}
+          >
+            <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
+              Datos del comprador
             </Text>
-            <Text
-              style={[estilos.valorTotal, { color: textoPrincipal }]}
-            >
-              {formatoCLP(totalMostrar)}
+
+            <Text style={[estilos.labelInput, { color: textoSecundario }]}>
+              Nombre y apellido
+            </Text>
+            <TextInput
+              style={[
+                estilos.input,
+                {
+                  borderColor: borde,
+                  color: textoPrincipal,
+                },
+              ]}
+              placeholder="Ej: Juan Pérez"
+              placeholderTextColor={textoSecundario}
+              value={comprador.nombre}
+              onChangeText={(t) => actualizarComprador("nombre", t)}
+            />
+
+            <Text style={[estilos.labelInput, { color: textoSecundario }]}>
+              Correo electrónico
+            </Text>
+            <TextInput
+              style={[
+                estilos.input,
+                {
+                  borderColor: borde,
+                  color: textoPrincipal,
+                },
+              ]}
+              placeholder="ejemplo@correo.cl"
+              placeholderTextColor={textoSecundario}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={comprador.correo}
+              onChangeText={(t) => actualizarComprador("correo", t)}
+            />
+
+            <Text style={[estilos.nota, { color: textoSecundario }]}>
+              Usaremos este correo solo para enviarte el comprobante y las
+              entradas. Revisa también tu carpeta de spam.
             </Text>
           </View>
-        </View>
+        </ScrollView>
 
-        {/* Datos del comprador */}
+        {/* Botón + menú */}
         <View
           style={[
-            estilos.tarjeta,
-            { backgroundColor: tarjeta, borderColor: borde },
+            estilos.footer,
+            { backgroundColor: fondo, borderTopColor: borde },
           ]}
         >
-          <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-            Datos del comprador
-          </Text>
-
-          <Text style={[estilos.labelInput, { color: textoSecundario }]}>
-            Nombre y apellido
-          </Text>
-          <TextInput
+          <TouchableOpacity
             style={[
-              estilos.input,
-              {
-                borderColor: borde,
-                color: textoPrincipal,
-              },
+              estilos.botonConfirmar,
+              (!puedeConfirmar || expirada) &&
+                estilos.botonDeshabilitado,
             ]}
-            placeholder="Ej: Juan Pérez"
-            placeholderTextColor={textoSecundario}
-            value={comprador.nombre}
-            onChangeText={(t) => actualizarComprador("nombre", t)}
-          />
+            onPress={confirmarCompra}
+            disabled={!puedeConfirmar || expirada}
+          >
+            <Text style={estilos.textoBoton}>
+              {enviando ? "Confirmando…" : "Confirmar compra"}
+            </Text>
+          </TouchableOpacity>
 
-          <Text style={[estilos.labelInput, { color: textoSecundario }]}>
-            Correo electrónico
-          </Text>
-          <TextInput
-            style={[
-              estilos.input,
-              {
-                borderColor: borde,
-                color: textoPrincipal,
-              },
-            ]}
-            placeholder="ejemplo@correo.cl"
-            placeholderTextColor={textoSecundario}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={comprador.correo}
-            onChangeText={(t) => actualizarComprador("correo", t)}
-          />
-
-          <Text style={[estilos.nota, { color: textoSecundario }]}>
-            Usaremos este correo solo para enviarte el comprobante y las
-            entradas. Revisa también tu carpeta de spam.
-          </Text>
+          <BottomMenu active="home" />
         </View>
-      </ScrollView>
-
-      {/* Botón de confirmar fijo abajo */}
-      <View
-        style={[
-          estilos.footer,
-          { backgroundColor: fondo, borderTopColor: borde },
-        ]}
-      >
-        <TouchableOpacity
-          style={[
-            estilos.botonConfirmar,
-            (!puedeConfirmar || expirada) && estilos.botonDeshabilitado,
-          ]}
-          onPress={confirmarCompra}
-          disabled={!puedeConfirmar || expirada}
-        >
-          <Text style={estilos.textoBoton}>
-            {enviando ? "Confirmando…" : "Confirmar compra"}
-          </Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -574,8 +582,7 @@ const estilos = StyleSheet.create({
   },
   fila: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
+    justifyContent: "spaceBetween",
   },
   etiqueta: {
     fontSize: 14,
@@ -604,7 +611,6 @@ const estilos = StyleSheet.create({
   detalleEvento: {
     fontSize: 13,
   },
-
   // Botón "Ver en el mapa"
   botonMapa: {
     marginTop: 8,
@@ -620,7 +626,6 @@ const estilos = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
-
   filaItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -666,8 +671,7 @@ const estilos = StyleSheet.create({
   footer: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    // separado de los 3 botones de Android
-    paddingBottom: Platform.OS === "android" ? 40 : 16,
+    paddingBottom: Platform.OS === "android" ? 8 : 12,
     borderTopWidth: 1,
   },
   botonConfirmar: {
@@ -675,6 +679,7 @@ const estilos = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 999,
     alignItems: "center",
+    marginBottom: 4,
   },
   botonDeshabilitado: {
     opacity: 0.6,

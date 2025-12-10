@@ -15,6 +15,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { getEventDetails } from "../api/events";
 import { createReservation } from "../api/reservations";
 import { useThemeSettings } from "../context/ThemeContext";
+import BottomMenu from "../components/BottomMenu";
 
 const formatoCLP = (valor) => {
   if (typeof valor !== "number" || Number.isNaN(valor)) return "$0";
@@ -207,188 +208,203 @@ export default function EventDetailScreen() {
 
   return (
     <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
-      <ScrollView contentContainerStyle={estilos.contenido}>
-        {/* IMAGEN PRINCIPAL */}
-        <Image
-          source={{ uri: urlImagen }}
-          style={estilos.imagenEncabezado}
-          resizeMode="cover"
-        />
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={estilos.contenido}>
+          {/* IMAGEN PRINCIPAL */}
+          <Image
+            source={{ uri: urlImagen }}
+            style={estilos.imagenEncabezado}
+            resizeMode="cover"
+          />
 
-        {/* Información general */}
-        <Text style={[estilos.titulo, { color: textoPrincipal }]}>
-          {evento.name}
-        </Text>
-        <Text style={[estilos.info, { color: textoSecundario }]}>
-          {fechaLarga}
-        </Text>
-        <Text style={[estilos.info, { color: textoSecundario }]}>
-          {evento.location}
-        </Text>
-        {evento.category && (
+          {/* Información general */}
+          <Text style={[estilos.titulo, { color: textoPrincipal }]}>
+            {evento.name}
+          </Text>
           <Text style={[estilos.info, { color: textoSecundario }]}>
-            Categoría: {evento.category}
+            {fechaLarga}
           </Text>
-        )}
+          <Text style={[estilos.info, { color: textoSecundario }]}>
+            {evento.location}
+          </Text>
+          {evento.category && (
+            <Text style={[estilos.info, { color: textoSecundario }]}>
+              Categoría: {evento.category}
+            </Text>
+          )}
 
-        {/* Descripción */}
-        <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-          Descripción
-        </Text>
-        <Text style={[estilos.parrafo, { color: textoSecundario }]}>
-          {evento.description || "Este evento aún no tiene descripción."}
-        </Text>
-
-        {/* Entradas */}
-        <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-          Selecciona tus entradas
-        </Text>
-
-        {tickets.length === 0 ? (
+          {/* Descripción */}
+          <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
+            Descripción
+          </Text>
           <Text style={[estilos.parrafo, { color: textoSecundario }]}>
-            Este evento no tiene tipos de entradas configurados.
+            {evento.description || "Este evento aún no tiene descripción."}
           </Text>
-        ) : (
-          <View style={estilos.listaTickets}>
-            {tickets.map((t) => {
-              const q = cantidadesPorTipo[t.type] || 0;
-              const max = Math.min(110, t.available ?? 0);
 
-              return (
-                <View
-                  key={t.type}
-                  style={[
-                    estilos.filaTicket,
-                    { backgroundColor: fondoTarjeta, borderColor: borde },
-                  ]}
-                >
-                  <View style={estilos.metaTicket}>
-                    <Text
-                      style={[
-                        estilos.nombreTicket,
-                        { color: textoPrincipal },
-                      ]}
-                    >
-                      {t.type}
-                    </Text>
-                    <Text
-                      style={[
-                        estilos.precioTicket,
-                        { color: "#A855F7" },
-                      ]}
-                    >
-                      {formatoCLP(t.price || 0)}
-                    </Text>
-                    <Text
-                      style={[
-                        estilos.stockTicket,
-                        { color: textoSecundario },
-                      ]}
-                    >
-                      Disponibles: {t.available} (máx. {max})
-                    </Text>
-                  </View>
+          {/* Entradas */}
+          <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
+            Selecciona tus entradas
+          </Text>
 
-                  <View style={estilos.controlesCantidad}>
-                    <TouchableOpacity
-                      style={[
-                        estilos.botonCantidad,
-                        { borderColor: borde },
-                        q <= 0 && estilos.botonCantidadDeshabilitado,
-                      ]}
-                      onPress={() => decrementar(t.type)}
-                      disabled={q <= 0}
-                    >
+          {tickets.length === 0 ? (
+            <Text style={[estilos.parrafo, { color: textoSecundario }]}>
+              Este evento no tiene tipos de entradas configurados.
+            </Text>
+          ) : (
+            <View style={estilos.listaTickets}>
+              {tickets.map((t) => {
+                const q = cantidadesPorTipo[t.type] || 0;
+                const max = Math.min(110, t.available ?? 0);
+
+                return (
+                  <View
+                    key={t.type}
+                    style={[
+                      estilos.filaTicket,
+                      {
+                        backgroundColor: fondoTarjeta,
+                        borderColor: borde,
+                      },
+                    ]}
+                  >
+                    <View style={estilos.metaTicket}>
                       <Text
                         style={[
-                          estilos.textoBotonCantidad,
+                          estilos.nombreTicket,
                           { color: textoPrincipal },
                         ]}
                       >
-                        −
+                        {t.type}
                       </Text>
-                    </TouchableOpacity>
-
-                    <Text
-                      style={[
-                        estilos.textoCantidad,
-                        { color: textoPrincipal },
-                      ]}
-                    >
-                      {q}
-                    </Text>
-
-                    <TouchableOpacity
-                      style={[
-                        estilos.botonCantidad,
-                        { borderColor: borde },
-                        q >= max && estilos.botonCantidadDeshabilitado,
-                      ]}
-                      onPress={() => incrementar(t.type)}
-                      disabled={q >= max}
-                    >
                       <Text
                         style={[
-                          estilos.textoBotonCantidad,
+                          estilos.precioTicket,
+                          { color: "#A855F7" },
+                        ]}
+                      >
+                        {formatoCLP(t.price || 0)}
+                      </Text>
+                      <Text
+                        style={[
+                          estilos.stockTicket,
+                          { color: textoSecundario },
+                        ]}
+                      >
+                        Disponibles: {t.available} (máx. {max})
+                      </Text>
+                    </View>
+
+                    <View style={estilos.controlesCantidad}>
+                      <TouchableOpacity
+                        style={[
+                          estilos.botonCantidad,
+                          { borderColor: borde },
+                          q <= 0 && estilos.botonCantidadDeshabilitado,
+                        ]}
+                        onPress={() => decrementar(t.type)}
+                        disabled={q <= 0}
+                      >
+                        <Text
+                          style={[
+                            estilos.textoBotonCantidad,
+                            { color: textoPrincipal },
+                          ]}
+                        >
+                          −
+                        </Text>
+                      </TouchableOpacity>
+
+                      <Text
+                        style={[
+                          estilos.textoCantidad,
                           { color: textoPrincipal },
                         ]}
                       >
-                        +
+                        {q}
                       </Text>
-                    </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          estilos.botonCantidad,
+                          { borderColor: borde },
+                          q >= max && estilos.botonCantidadDeshabilitado,
+                        ]}
+                        onPress={() => incrementar(t.type)}
+                        disabled={q >= max}
+                      >
+                        <Text
+                          style={[
+                            estilos.textoBotonCantidad,
+                            { color: textoPrincipal },
+                          ]}
+                        >
+                          +
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
+          )}
+
+          {/* Totales */}
+          <View
+            style={[
+              estilos.cajaTotales,
+              { backgroundColor: fondoTarjeta, borderColor: borde },
+            ]}
+          >
+            <View style={estilos.filaTotal}>
+              <Text
+                style={[estilos.etiquetaTotal, { color: textoSecundario }]}
+              >
+                Total entradas
+              </Text>
+              <Text
+                style={[estilos.valorTotal, { color: textoPrincipal }]}
+              >
+                {totalEntradas}
+              </Text>
+            </View>
+            <View style={estilos.filaTotal}>
+              <Text
+                style={[estilos.etiquetaTotal, { color: textoSecundario }]}
+              >
+                Total a pagar
+              </Text>
+              <Text
+                style={[estilos.valorTotal, { color: textoPrincipal }]}
+              >
+                {formatoCLP(totalCLP)}
+              </Text>
+            </View>
           </View>
-        )}
+        </ScrollView>
 
-        {/* Totales */}
+        {/* Footer: botón + menú */}
         <View
           style={[
-            estilos.cajaTotales,
-            { backgroundColor: fondoTarjeta, borderColor: borde },
+            estilos.footer,
+            { backgroundColor: fondo, borderTopColor: borde },
           ]}
         >
-          <View style={estilos.filaTotal}>
-            <Text style={[estilos.etiquetaTotal, { color: textoSecundario }]}>
-              Total entradas
+          <TouchableOpacity
+            style={[
+              estilos.botonReservar,
+              (totalEntradas === 0 || reservando) &&
+                estilos.botonReservarDeshabilitado,
+            ]}
+            onPress={manejarReserva}
+            disabled={totalEntradas === 0 || reservando}
+          >
+            <Text style={estilos.textoBotonReservar}>
+              {reservando ? "Reservando..." : "Reservar entradas"}
             </Text>
-            <Text style={[estilos.valorTotal, { color: textoPrincipal }]}>
-              {totalEntradas}
-            </Text>
-          </View>
-          <View style={estilos.filaTotal}>
-            <Text style={[estilos.etiquetaTotal, { color: textoSecundario }]}>
-              Total a pagar
-            </Text>
-            <Text style={[estilos.valorTotal, { color: textoPrincipal }]}>
-              {formatoCLP(totalCLP)}
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
+          </TouchableOpacity>
 
-      {/* SOLO botón grande de reservar abajo */}
-      <View
-        style={[
-          estilos.footer,
-          { backgroundColor: fondo, borderTopColor: borde },
-        ]}
-      >
-        <TouchableOpacity
-          style={[
-            estilos.botonReservar,
-            (totalEntradas === 0 || reservando) &&
-              estilos.botonReservarDeshabilitado,
-          ]}
-          onPress={manejarReserva}
-          disabled={totalEntradas === 0 || reservando}
-        >
-          <Text style={estilos.textoBotonReservar}>
-            {reservando ? "Reservando..." : "Reservar entradas"}
-          </Text>
-        </TouchableOpacity>
+          <BottomMenu active="home" />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -509,7 +525,7 @@ const estilos = StyleSheet.create({
   footer: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: Platform.OS === "android" ? 40 : 16,
+    paddingBottom: Platform.OS === "android" ? 8 : 12,
     borderTopWidth: 1,
   },
   botonReservar: {
@@ -517,6 +533,7 @@ const estilos = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 999,
     alignItems: "center",
+    marginBottom: 4,
   },
   botonReservarDeshabilitado: {
     opacity: 0.6,

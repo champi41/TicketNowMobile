@@ -1,155 +1,112 @@
-
-import React from "react";
+// src/screens/SettingsScreen.js
+import React, { useState } from "react";
 import {
   SafeAreaView,
   View,
   Text,
   StyleSheet,
   Switch,
-  TouchableOpacity,
 } from "react-native";
 import { useThemeSettings } from "../context/ThemeContext";
+import BottomMenu from "../components/BottomMenu";
 
 export default function SettingsScreen() {
-  const { isDark, setIsDark, language, setLanguage } = useThemeSettings();
+  const { isDark: esOscuro, setIsDark: setEsOscuro } = useThemeSettings();
+  const [idioma, setIdioma] = useState("es"); // solo visual
+
+  const fondo = esOscuro ? "#020617" : "#F3F4F6";
+  const tarjeta = esOscuro ? "#0F172A" : "#FFFFFF";
+  const borde = esOscuro ? "#1F2937" : "#E5E7EB";
+  const textoPrincipal = esOscuro ? "#F9FAFB" : "#111827";
+  const textoSecundario = esOscuro ? "#9CA3AF" : "#4B5563";
 
   return (
     <SafeAreaView
-      style={[
-        styles.container,
-        isDark && { backgroundColor: "#020617" }, // fondo oscuro
-      ]}
+      style={[estilos.contenedor, { backgroundColor: fondo }]}
     >
-      <Text
-        style={[
-          styles.title,
-          isDark && { color: "#F9FAFB" },
-        ]}
-      >
-        Configuración
-      </Text>
-
-      {/* Modo oscuro */}
-      <View style={styles.row}>
-        <Text
+      <View style={{ flex: 1 }}>
+        <View
           style={[
-            styles.label,
-            isDark && { color: "#E5E7EB" },
+            estilos.tarjeta,
+            { backgroundColor: tarjeta, borderColor: borde },
           ]}
         >
-          Modo oscuro
-        </Text>
-        <Switch value={isDark} onValueChange={setIsDark} />
-      </View>
+          <Text style={[estilos.titulo, { color: textoPrincipal }]}>
+            Ajustes
+          </Text>
 
-      {/* Idioma */}
-      <View style={styles.row}>
-        <Text
-          style={[
-            styles.label,
-            isDark && { color: "#E5E7EB" },
-          ]}
-        >
-          Idioma
-        </Text>
-        <View style={styles.languageButtons}>
-          <TouchableOpacity
-            style={[
-              styles.langButton,
-              language === "es" && styles.langButtonActive,
-            ]}
-            onPress={() => setLanguage("es")}
-          >
-            <Text
-              style={[
-                styles.langButtonText,
-                language === "es" && styles.langButtonTextActive,
-              ]}
-            >
-              ES
+          {/* Modo oscuro */}
+          <View style={estilos.fila}>
+            <View>
+              <Text
+                style={[estilos.label, { color: textoPrincipal }]}
+              >
+                Modo oscuro
+              </Text>
+              <Text
+                style={[estilos.descripcion, { color: textoSecundario }]}
+              >
+                Cambia entre modo claro y oscuro.
+              </Text>
+            </View>
+            <Switch
+              value={esOscuro}
+              onValueChange={(v) => setEsOscuro(v)}
+            />
+          </View>
+
+          {/* Idioma (demo) */}
+          <View style={estilos.fila}>
+            <View>
+              <Text
+                style={[estilos.label, { color: textoPrincipal }]}
+              >
+                Idioma de la app
+              </Text>
+              <Text
+                style={[estilos.descripcion, { color: textoSecundario }]}
+              >
+                (Demostración) Español / Inglés.
+              </Text>
+            </View>
+            <Text style={{ color: textoPrincipal, fontWeight: "600" }}>
+              {idioma === "es" ? "Español" : "English"}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.langButton,
-              language === "en" && styles.langButtonActive,
-            ]}
-            onPress={() => setLanguage("en")}
-          >
-            <Text
-              style={[
-                styles.langButtonText,
-                language === "en" && styles.langButtonTextActive,
-              ]}
-            >
-              EN
-            </Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      <Text
-        style={[
-          styles.info,
-          isDark && { color: "#9CA3AF" },
-        ]}
-      >
-        (Por ahora estos cambios son de demostración. Después se pueden conectar
-        a un tema global y traducciones de toda la app.)
-      </Text>
+      <BottomMenu active="settings" />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const estilos = StyleSheet.create({
+  contenedor: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#F3F4F6",
+    padding: 16,
   },
-  title: {
+  tarjeta: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+  },
+  titulo: {
     fontSize: 22,
     fontWeight: "700",
-    marginBottom: 20,
-    color: "#111827",
+    marginBottom: 16,
   },
-  row: {
+  fila: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   label: {
     fontSize: 16,
-    color: "#111827",
+    fontWeight: "600",
   },
-  languageButtons: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  langButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#FFFFFF",
-  },
-  langButtonActive: {
-    backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
-  },
-  langButtonText: {
-    fontSize: 14,
-    color: "#111827",
-    fontWeight: "500",
-  },
-  langButtonTextActive: {
-    color: "#FFFFFF",
-  },
-  info: {
-    marginTop: 24,
+  descripcion: {
     fontSize: 13,
-    color: "#4B5563",
   },
 });
