@@ -38,13 +38,13 @@ export default function App() {
           <Stack.Screen
             name="Checkout"
             component={CheckoutScreen}
-            options={{ title: "Checkout" }}
+            options={{ headerShown: false }}
           />
 
           <Stack.Screen
             name="Purchases"
             component={PurchasesScreen}
-            options={{ title: "Mis compras" }}
+            options={{ headerShown: false }}
           />
 
           <Stack.Screen

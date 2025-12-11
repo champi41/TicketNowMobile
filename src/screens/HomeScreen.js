@@ -304,7 +304,7 @@ export default function HomeScreen() {
               },
             ]}
             placeholder="Buscar evento..."
-            placeholderTextColor="#D4B3FF"
+            placeholderTextColor="#000000ff"
             value={textoBusqueda}
             onChangeText={setTextoBusqueda}
           />
