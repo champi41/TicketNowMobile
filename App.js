@@ -10,50 +10,53 @@ import PurchasesScreen from "./src/screens/PurchasesScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 
 import { ThemeProvider } from "./src/context/ThemeContext";
+import { LanguageProvider } from "./src/context/LanguageContext"; // 👈 importar proveedor de idioma
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <ThemeProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerTitleAlign: "center", // centramos los títulos de las otras pantallas
-          }}
-        >
-          {/* Home SIN encabezado nativo */}
-          <Stack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{ headerShown: false }}
-          />
+      <LanguageProvider>   {/* 👈 aquí envolvemos todo con el idioma */}
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerTitleAlign: "center",
+            }}
+          >
+            {/* Home SIN encabezado nativo */}
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ headerShown: false }}
+            />
 
-          <Stack.Screen
-            name="EventDetail"
-            component={EventDetailScreen}
-            options={{ title: "Detalle del evento" }}
-          />
+            <Stack.Screen
+              name="EventDetail"
+              component={EventDetailScreen}
+              options={{ title: "Detalle del evento" }}
+            />
 
-          <Stack.Screen
-            name="Checkout"
-            component={CheckoutScreen}
-            options={{ headerShown: false }}
-          />
+            <Stack.Screen
+              name="Checkout"
+              component={CheckoutScreen}
+              options={{ headerShown: false }}
+            />
 
-          <Stack.Screen
-            name="Purchases"
-            component={PurchasesScreen}
-            options={{ headerShown: false }}
-          />
+            <Stack.Screen
+              name="Purchases"
+              component={PurchasesScreen}
+              options={{ headerShown: false }}
+            />
 
-          <Stack.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{ title: "Configuración" }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{ headerShown: false }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

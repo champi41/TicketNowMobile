@@ -1,16 +1,17 @@
 // src/screens/PurchasesScreen.js
 import React, { useEffect, useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPurchase } from "../api/purchases";
 import { useThemeSettings } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import BottomMenu from "../components/BottomMenu";
 
 function formatoCLP(n) {
@@ -24,6 +25,7 @@ function formatoCLP(n) {
 
 export default function PurchasesScreen() {
   const { isDark: esOscuro } = useThemeSettings();
+  const { language, t } = useLanguage();
 
   const [ids, setIds] = useState([]);
   const [compras, setCompras] = useState([]);
@@ -34,6 +36,20 @@ export default function PurchasesScreen() {
   const borde = esOscuro ? "#1F2937" : "#E5E7EB";
   const textoPrincipal = esOscuro ? "#F9FAFB" : "#111827";
   const textoSecundario = esOscuro ? "#9CA3AF" : "#4B5563";
+  const morado = "#A855F7";
+  const moradoSuave = "#E9D5FF";
+
+  const cantidadCompras = compras.length;
+
+  // Badge de cantidad según idioma
+  const badgeTexto =
+    language === "es"
+      ? `${cantidadCompras} compra${
+          cantidadCompras !== 1 ? "s" : ""
+        }`
+      : `${cantidadCompras} purchase${
+          cantidadCompras !== 1 ? "s" : ""
+        }`;
 
   // Cargar IDs guardados
   useEffect(() => {
@@ -91,38 +107,72 @@ export default function PurchasesScreen() {
   return (
     <SafeAreaView
       style={[estilos.contenedor, { backgroundColor: fondo }]}
+      edges={["top"]}
     >
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={estilos.scrollContenido}>
-          <Text style={[estilos.titulo, { color: textoPrincipal }]}>
-            Historial de compras
-          </Text>
+          {/* ENCABEZADO LINDO */}
+          <View style={estilos.header}>
+            <Text
+              style={[estilos.headerTitulo, { color: textoPrincipal }]}
+            >
+              {t("purchases_title")}
+            </Text>
 
+            <Text
+              style={[estilos.headerSubtitulo, { color: textoSecundario }]}
+            >
+              {t("purchases_subtitle")}
+            </Text>
+
+            {cantidadCompras > 0 && (
+              <View
+                style={[
+                  estilos.badgeCantidad,
+                  { backgroundColor: moradoSuave },
+                ]}
+              >
+                <Text
+                  style={[
+                    estilos.badgeTexto,
+                    { color: morado },
+                  ]}
+                >
+                  {badgeTexto}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* ESTADOS: cargando / vacío */}
           {cargando && (
             <View style={estilos.centro}>
-              <ActivityIndicator size="large" color="#A855F7" />
+              <ActivityIndicator size="large" color={morado} />
               <Text
                 style={[
                   estilos.textoSecundario,
-                  { color: textoSecundario },
+                  { color: textoSecundario, marginTop: 6 },
                 ]}
               >
-                Cargando compras…
+                {t("purchases_loading")}
               </Text>
             </View>
           )}
 
           {!cargando && !ids.length && (
-            <Text
-              style={[
-                estilos.textoSecundario,
-                { color: textoSecundario, marginTop: 16 },
-              ]}
-            >
-              Aún no tienes compras registradas en este dispositivo.
-            </Text>
+            <View style={estilos.centro}>
+              <Text
+                style={[
+                  estilos.textoSecundario,
+                  { color: textoSecundario, textAlign: "center" },
+                ]}
+              >
+                {t("purchases_empty")}
+              </Text>
+            </View>
           )}
 
+          {/* LISTA DE COMPRAS */}
           {!cargando &&
             compras.map((p) => {
               const id = p._id || p.id || "—";
@@ -160,36 +210,49 @@ export default function PurchasesScreen() {
                     )
                   : 0);
 
-              const tickets = Array.isArray(p.tickets)
-                ? p.tickets
-                : Array.isArray(p.items)
-                ? p.items
-                : [];
-
               return (
                 <View
                   key={id}
                   style={[
                     estilos.tarjeta,
-                    { backgroundColor: tarjeta, borderColor: borde },
+                    {
+                      backgroundColor: tarjeta,
+                      borderColor: borde,
+                      shadowColor: "#000000",
+                    },
                   ]}
                 >
+                  {/* Encabezado de la tarjeta */}
                   <Text
                     style={[
                       estilos.subtitulo,
                       { color: textoPrincipal },
                     ]}
                   >
-                    Compra #{p.nro_compra || id}
+                    {t("purchases_card_prefix")} #{p.nro_compra || id}
                   </Text>
 
+                  {fechaCompra ? (
+                    <Text
+                      style={[
+                        estilos.fechaCompra,
+                        { color: textoSecundario },
+                      ]}
+                    >
+                      {fechaCompra}
+                    </Text>
+                  ) : null}
+
+                  <View style={estilos.separador} />
+
+                  {/* Datos principales */}
                   <Text
                     style={[
                       estilos.textoSecundario,
                       { color: textoSecundario },
                     ]}
                   >
-                    Evento:{" "}
+                    {t("purchases_event_label")}{" "}
                     <Text
                       style={{
                         fontWeight: "600",
@@ -200,24 +263,13 @@ export default function PurchasesScreen() {
                     </Text>
                   </Text>
 
-                  {fechaCompra ? (
-                    <Text
-                      style={[
-                        estilos.textoSecundario,
-                        { color: textoSecundario },
-                      ]}
-                    >
-                      Fecha compra: {fechaCompra}
-                    </Text>
-                  ) : null}
-
                   <Text
                     style={[
                       estilos.textoSecundario,
-                      { color: textoSecundario },
+                      { color: textoSecundario, marginTop: 2 },
                     ]}
                   >
-                    Estado:{" "}
+                    {t("purchases_status_label")}{" "}
                     <Text
                       style={{
                         fontWeight: "600",
@@ -234,46 +286,15 @@ export default function PurchasesScreen() {
                       { color: textoPrincipal },
                     ]}
                   >
-                    Total: {formatoCLP(total)}
+                    {t("purchases_total_label")} {formatoCLP(total)}
                   </Text>
-
-                  {tickets.length > 0 && (
-                    <View style={{ marginTop: 8 }}>
-                      <Text
-                        style={[
-                          estilos.textoSecundario,
-                          {
-                            color: textoSecundario,
-                            marginBottom: 4,
-                          },
-                        ]}
-                      >
-                        Entradas:
-                      </Text>
-                      {tickets.map((t, idx) => (
-                        <Text
-                          key={t.code || `${id}-${idx}`}
-                          style={[
-                            estilos.textoEntrada,
-                            { color: textoSecundario },
-                          ]}
-                        >
-                          {t.type || t.ticket_type || "Entrada"} —{" "}
-                          {t.code && (
-                            <Text style={{ fontWeight: "600" }}>
-                              Código: {t.code}
-                            </Text>
-                          )}
-                        </Text>
-                      ))}
-                    </View>
-                  )}
                 </View>
               );
             })}
         </ScrollView>
       </View>
 
+      {/* Menú inferior */}
       <BottomMenu active="home" />
     </SafeAreaView>
   );
@@ -281,15 +302,40 @@ export default function PurchasesScreen() {
 
 const estilos = StyleSheet.create({
   contenedor: { flex: 1 },
+
   scrollContenido: {
-    padding: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 28,
   },
-  titulo: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 12,
+
+  /* ENCABEZADO */
+  header: {
+    marginBottom: 14,
   },
+  headerTitulo: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  headerSubtitulo: {
+    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  badgeCantidad: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  badgeTexto: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  /* ESTADOS */
   centro: {
     marginTop: 24,
     alignItems: "center",
@@ -297,23 +343,35 @@ const estilos = StyleSheet.create({
   textoSecundario: {
     fontSize: 14,
   },
+
+  /* TARJETAS */
   tarjeta: {
     borderWidth: 1,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
   subtitulo: {
     fontSize: 16,
     fontWeight: "700",
-    marginBottom: 6,
+  },
+  fechaCompra: {
+    marginTop: 2,
+    fontSize: 12,
+  },
+  separador: {
+    height: 1,
+    backgroundColor: "rgba(148, 163, 184, 0.35)",
+    marginVertical: 8,
   },
   textoTotal: {
-    marginTop: 6,
+    marginTop: 8,
     fontSize: 15,
     fontWeight: "700",
-  },
-  textoEntrada: {
-    fontSize: 13,
   },
 });

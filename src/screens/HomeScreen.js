@@ -1,7 +1,6 @@
 // src/screens/HomeScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -13,9 +12,11 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { getEvents } from "../api/events";
 import { useThemeSettings } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import BottomMenu from "../components/BottomMenu";
 
 const { width } = Dimensions.get("window");
@@ -25,6 +26,7 @@ const LIMITE_POR_PAGINA = 20;
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { isDark: esOscuro, setIsDark: setEsOscuro } = useThemeSettings();
+  const { t } = useLanguage();
 
   const [textoBusqueda, setTextoBusqueda] = useState("");
 
@@ -32,7 +34,7 @@ export default function HomeScreen() {
   const [pagina, setPagina] = useState(1);
   const [totalEventos, setTotalEventos] = useState(null);
 
-  const [cargando, setCargando] = useState(false);      // carga inicial / reset
+  const [cargando, setCargando] = useState(false); // carga inicial / reset
   const [cargandoMas, setCargandoMas] = useState(false); // scroll infinito
   const [error, setError] = useState("");
 
@@ -42,7 +44,7 @@ export default function HomeScreen() {
     textoPrincipal: esOscuro ? "#F9FAFB" : "#1F2933",
     textoSecundario: esOscuro ? "#E5E7EB" : "#4B5563",
     morado: "#A855F7",
-    moradoSuave: "#ffffffff",
+    moradoSuave: "#FFFFFFFF",
     bordeMorado: "#C4B5FD",
     fondoTarjeta: esOscuro ? "#020617" : "#FFFFFF",
     sombraTarjeta: "#000000",
@@ -183,7 +185,7 @@ export default function HomeScreen() {
               }
             >
               <Text style={estilos.textoBotonDetalle}>
-                Ver detalles del evento
+                {t("home_view_details")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -217,6 +219,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView
       style={[estilos.contenedorPantalla, { backgroundColor: COLORES.fondo }]}
+      edges={["top"]} // 👈 solo safe area arriba
     >
       {/* CONTENIDO PRINCIPAL */}
       <View style={{ flex: 1 }}>
@@ -267,7 +270,9 @@ export default function HomeScreen() {
                 },
               ]}
             >
-              <Text style={estilos.textoBotonSegmentoActivo}>Eventos</Text>
+              <Text style={estilos.textoBotonSegmentoActivo}>
+                {t("home_events_button")}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -286,7 +291,7 @@ export default function HomeScreen() {
                   { color: COLORES.morado },
                 ]}
               >
-                Compras
+                {t("home_purchases_button")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -303,8 +308,8 @@ export default function HomeScreen() {
                 color: COLORES.textoPrincipal,
               },
             ]}
-            placeholder="Buscar evento..."
-            placeholderTextColor="#000000ff"
+            placeholder={t("home_search_placeholder")}
+            placeholderTextColor="#000000AA"
             value={textoBusqueda}
             onChangeText={setTextoBusqueda}
           />
@@ -362,10 +367,10 @@ const estilos = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     letterSpacing: 0.5,
+    
   },
 
-  // Interruptor tema
-  
+ 
 
   // Botones de segmento (Eventos / Compras)
   encabezadoFilaBotones: {
@@ -400,7 +405,7 @@ const estilos = StyleSheet.create({
   },
   buscador: {
     height: 48,
-    borderRadius: 999,
+    borderRadius: 12,
     paddingHorizontal: 18,
     borderWidth: 1,
     fontSize: 16,

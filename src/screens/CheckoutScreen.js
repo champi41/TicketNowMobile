@@ -1,7 +1,6 @@
 // src/screens/CheckoutScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -13,6 +12,7 @@ import {
   Platform,
   Linking,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -20,6 +20,7 @@ import { getReservation } from "../api/reservations";
 import { getEventDetails } from "../api/events";
 import { checkout } from "../api/checkout";
 import { useThemeSettings } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import BottomMenu from "../components/BottomMenu";
 
 function formatoCLP(n) {
@@ -35,6 +36,7 @@ export default function CheckoutScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { isDark: esOscuro } = useThemeSettings();
+  const { t } = useLanguage();
 
   const { reservationId } = route.params || {};
 
@@ -166,8 +168,8 @@ export default function CheckoutScreen() {
     const query = evento?.location || evento?.name;
     if (!query) {
       Alert.alert(
-        "Sin ubicación",
-        "Este evento no tiene una dirección configurada."
+        t("checkout_alert_no_location_title"),
+        t("checkout_alert_no_location_body")
       );
       return;
     }
@@ -177,7 +179,10 @@ export default function CheckoutScreen() {
     )}`;
 
     Linking.openURL(url).catch(() => {
-      Alert.alert("Error", "No se pudo abrir Google Maps.");
+      Alert.alert(
+        t("checkout_alert_openmaps_error_title"),
+        t("checkout_alert_openmaps_error_body")
+      );
     });
   };
 
@@ -216,15 +221,15 @@ export default function CheckoutScreen() {
       }
 
       Alert.alert(
-        "Compra confirmada",
-        "Te enviaremos las entradas al correo ingresado."
+        t("checkout_alert_success_title"),
+        t("checkout_alert_success_body")
       );
       navigation.navigate("Purchases");
     } catch (e) {
       console.error(e);
       Alert.alert(
-        "Error",
-        e.message || "No se pudo confirmar la compra."
+        t("checkout_alert_error_title"),
+        e.message || t("checkout_alert_error_body_default")
       );
     } finally {
       setEnviando(false);
@@ -236,13 +241,14 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView
         style={[estilos.contenedor, { backgroundColor: fondo }]}
+        edges={["top"]}
       >
         <View style={estilos.centro}>
           <ActivityIndicator size="large" color="#A855F7" />
           <Text
             style={[estilos.textoSecundario, { color: textoSecundario }]}
           >
-            Cargando reserva…
+            {t("checkout_loading")}
           </Text>
         </View>
       </SafeAreaView>
@@ -253,6 +259,7 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView
         style={[estilos.contenedor, { backgroundColor: fondo }]}
+        edges={["top"]}
       >
         <View style={estilos.centro}>
           <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
@@ -267,10 +274,11 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView
         style={[estilos.contenedor, { backgroundColor: fondo }]}
+        edges={["top"]}
       >
         <View style={estilos.centro}>
           <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
-            Reserva no encontrada.
+            {t("checkout_not_found")}
           </Text>
         </View>
       </SafeAreaView>
@@ -297,11 +305,12 @@ export default function CheckoutScreen() {
   return (
     <SafeAreaView
       style={[estilos.contenedor, { backgroundColor: fondo }]}
+      edges={["top"]}
     >
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={estilos.scrollContenido}>
           <Text style={[estilos.titulo, { color: textoPrincipal }]}>
-            Checkout
+            {t("checkout_title")}
           </Text>
 
           {/* Resumen de reserva */}
@@ -312,12 +321,12 @@ export default function CheckoutScreen() {
             ]}
           >
             <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-              Resumen de la reserva
+              {t("checkout_summary_title")}
             </Text>
 
             <View style={estilos.fila}>
               <Text style={[estilos.etiqueta, { color: textoSecundario }]}>
-                Estado:
+                {t("checkout_status_label")}
               </Text>
               <Text style={[estilos.valor, { color: textoPrincipal }]}>
                 {etiquetaEstado}
@@ -329,7 +338,7 @@ export default function CheckoutScreen() {
                 <Text
                   style={[estilos.etiqueta, { color: textoSecundario }]}
                 >
-                  Creada:
+                  {t("checkout_created_label")}
                 </Text>
                 <Text style={[estilos.valor, { color: textoPrincipal }]}>
                   {new Date(reserva.created_at).toLocaleString("es-CL", {
@@ -345,7 +354,7 @@ export default function CheckoutScreen() {
                 <Text
                   style={[estilos.etiqueta, { color: textoSecundario }]}
                 >
-                  Reserva válida por:
+                  {t("checkout_valid_for_label")}
                 </Text>
                 <Text
                   style={[
@@ -362,8 +371,7 @@ export default function CheckoutScreen() {
 
             {expirada && (
               <Text style={[estilos.textoError, { marginTop: 8 }]}>
-                La reserva expiró. Vuelve al listado de eventos y genera
-                una nueva.
+                {t("checkout_expired_text")}
               </Text>
             )}
 
@@ -376,7 +384,7 @@ export default function CheckoutScreen() {
                     { color: textoPrincipal },
                   ]}
                 >
-                  Evento
+                  {t("checkout_event_section_title")}
                 </Text>
                 <View style={estilos.itemEvento}>
                   <Text
@@ -403,7 +411,7 @@ export default function CheckoutScreen() {
                       onPress={abrirEnMapa}
                     >
                       <Text style={estilos.textoBotonMapa}>
-                        Ver en el mapa
+                        {t("checkout_map_button")}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -418,7 +426,7 @@ export default function CheckoutScreen() {
                 { color: textoPrincipal },
               ]}
             >
-              Entradas
+              {t("checkout_tickets_section_title")}
             </Text>
             {itemsMostrar.map((it) => (
               <View key={it.tipo} style={estilos.filaItem}>
@@ -454,12 +462,18 @@ export default function CheckoutScreen() {
             {/* Total */}
             <View style={estilos.filaTotal}>
               <Text
-                style={[estilos.etiquetaTotal, { color: textoSecundario }]}
+                style={[
+                  estilos.etiquetaTotal,
+                  { color: textoSecundario },
+                ]}
               >
-                Total a pagar
+                {t("checkout_total_label")}
               </Text>
               <Text
-                style={[estilos.valorTotal, { color: textoPrincipal }]}
+                style={[
+                  estilos.valorTotal,
+                  { color: textoPrincipal },
+                ]}
               >
                 {formatoCLP(totalMostrar)}
               </Text>
@@ -474,11 +488,11 @@ export default function CheckoutScreen() {
             ]}
           >
             <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-              Datos del comprador
+              {t("checkout_buyer_title")}
             </Text>
 
             <Text style={[estilos.labelInput, { color: textoSecundario }]}>
-              Nombre y apellido
+              {t("checkout_buyer_name_label")}
             </Text>
             <TextInput
               style={[
@@ -491,11 +505,11 @@ export default function CheckoutScreen() {
               placeholder="Ej: Juan Pérez"
               placeholderTextColor={textoSecundario}
               value={comprador.nombre}
-              onChangeText={(t) => actualizarComprador("nombre", t)}
+              onChangeText={(txt) => actualizarComprador("nombre", txt)}
             />
 
             <Text style={[estilos.labelInput, { color: textoSecundario }]}>
-              Correo electrónico
+              {t("checkout_buyer_email_label")}
             </Text>
             <TextInput
               style={[
@@ -510,12 +524,11 @@ export default function CheckoutScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               value={comprador.correo}
-              onChangeText={(t) => actualizarComprador("correo", t)}
+              onChangeText={(txt) => actualizarComprador("correo", txt)}
             />
 
             <Text style={[estilos.nota, { color: textoSecundario }]}>
-              Usaremos este correo solo para enviarte el comprobante y las
-              entradas. Revisa también tu carpeta de spam.
+              {t("checkout_buyer_note")}
             </Text>
           </View>
         </ScrollView>
@@ -537,7 +550,9 @@ export default function CheckoutScreen() {
             disabled={!puedeConfirmar || expirada}
           >
             <Text style={estilos.textoBoton}>
-              {enviando ? "Confirmando…" : "Confirmar compra"}
+              {enviando
+                ? t("checkout_button_confirming")
+                : t("checkout_button_confirm")}
             </Text>
           </TouchableOpacity>
 
@@ -582,7 +597,7 @@ const estilos = StyleSheet.create({
   },
   fila: {
     flexDirection: "row",
-    justifyContent: "spaceBetween",
+    justifyContent: "space-between",
   },
   etiqueta: {
     fontSize: 14,

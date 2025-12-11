@@ -1,7 +1,6 @@
 // src/screens/EventDetailScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -11,10 +10,12 @@ import {
   Image,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { getEventDetails } from "../api/events";
 import { createReservation } from "../api/reservations";
 import { useThemeSettings } from "../context/ThemeContext";
+import { useLanguage } from "../context/LanguageContext";
 import BottomMenu from "../components/BottomMenu";
 
 const formatoCLP = (valor) => {
@@ -30,6 +31,7 @@ export default function EventDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { isDark: esOscuro } = useThemeSettings();
+  const { t } = useLanguage();
   const { eventId } = route.params || {};
 
   const [evento, setEvento] = useState(null);
@@ -114,7 +116,7 @@ export default function EventDetailScreen() {
       .map(([type, quantity]) => ({ type, quantity }));
 
     if (items.length === 0) {
-      alert("Selecciona al menos 1 entrada.");
+      alert(t("event_detail_alert_select_one"));
       return;
     }
 
@@ -130,7 +132,7 @@ export default function EventDetailScreen() {
       });
     } catch (err) {
       console.error(err);
-      alert(err.message || "No se pudo crear la reserva");
+      alert(err.message || t("event_detail_alert_reservation_failed"));
     } finally {
       setReservando(false);
     }
@@ -145,10 +147,13 @@ export default function EventDetailScreen() {
 
   if (!eventId) {
     return (
-      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+      <SafeAreaView
+        style={[estilos.contenedor, { backgroundColor: fondo }]}
+        edges={["top"]}
+      >
         <View style={estilos.centro}>
           <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
-            No se recibió el ID del evento.
+            {t("event_detail_no_id")}
           </Text>
         </View>
       </SafeAreaView>
@@ -157,7 +162,10 @@ export default function EventDetailScreen() {
 
   if (cargando) {
     return (
-      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+      <SafeAreaView
+        style={[estilos.contenedor, { backgroundColor: fondo }]}
+        edges={["top"]}
+      >
         <View style={estilos.centro}>
           <ActivityIndicator size="large" color="#A855F7" />
         </View>
@@ -167,7 +175,10 @@ export default function EventDetailScreen() {
 
   if (error) {
     return (
-      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+      <SafeAreaView
+        style={[estilos.contenedor, { backgroundColor: fondo }]}
+        edges={["top"]}
+      >
         <View style={estilos.centro}>
           <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
             {error}
@@ -179,10 +190,13 @@ export default function EventDetailScreen() {
 
   if (!evento) {
     return (
-      <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+      <SafeAreaView
+        style={[estilos.contenedor, { backgroundColor: fondo }]}
+        edges={["top"]}
+      >
         <View style={estilos.centro}>
           <Text style={[estilos.textoError, { color: "#FCA5A5" }]}>
-            No se encontró el evento.
+            {t("event_detail_not_found")}
           </Text>
         </View>
       </SafeAreaView>
@@ -207,7 +221,10 @@ export default function EventDetailScreen() {
     "https://placehold.co/800x400/111827/eeeeee?text=Evento";
 
   return (
-    <SafeAreaView style={[estilos.contenedor, { backgroundColor: fondo }]}>
+    <SafeAreaView
+      style={[estilos.contenedor, { backgroundColor: fondo }]}
+      edges={["top"]}
+    >
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={estilos.contenido}>
           {/* IMAGEN PRINCIPAL */}
@@ -235,30 +252,31 @@ export default function EventDetailScreen() {
 
           {/* Descripción */}
           <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-            Descripción
+            {t("event_detail_description_title")}
           </Text>
           <Text style={[estilos.parrafo, { color: textoSecundario }]}>
-            {evento.description || "Este evento aún no tiene descripción."}
+            {evento.description ||
+              t("event_detail_description_fallback")}
           </Text>
 
           {/* Entradas */}
           <Text style={[estilos.subtitulo, { color: textoPrincipal }]}>
-            Selecciona tus entradas
+            {t("event_detail_select_tickets")}
           </Text>
 
           {tickets.length === 0 ? (
             <Text style={[estilos.parrafo, { color: textoSecundario }]}>
-              Este evento no tiene tipos de entradas configurados.
+              {t("event_detail_no_tickets")}
             </Text>
           ) : (
             <View style={estilos.listaTickets}>
-              {tickets.map((t) => {
-                const q = cantidadesPorTipo[t.type] || 0;
-                const max = Math.min(110, t.available ?? 0);
+              {tickets.map((tkt) => {
+                const q = cantidadesPorTipo[tkt.type] || 0;
+                const max = Math.min(110, tkt.available ?? 0);
 
                 return (
                   <View
-                    key={t.type}
+                    key={tkt.type}
                     style={[
                       estilos.filaTicket,
                       {
@@ -274,7 +292,7 @@ export default function EventDetailScreen() {
                           { color: textoPrincipal },
                         ]}
                       >
-                        {t.type}
+                        {tkt.type}
                       </Text>
                       <Text
                         style={[
@@ -282,7 +300,7 @@ export default function EventDetailScreen() {
                           { color: "#A855F7" },
                         ]}
                       >
-                        {formatoCLP(t.price || 0)}
+                        {formatoCLP(tkt.price || 0)}
                       </Text>
                       <Text
                         style={[
@@ -290,7 +308,7 @@ export default function EventDetailScreen() {
                           { color: textoSecundario },
                         ]}
                       >
-                        Disponibles: {t.available} (máx. {max})
+                        Disponibles: {tkt.available} (máx. {max})
                       </Text>
                     </View>
 
@@ -301,7 +319,7 @@ export default function EventDetailScreen() {
                           { borderColor: borde },
                           q <= 0 && estilos.botonCantidadDeshabilitado,
                         ]}
-                        onPress={() => decrementar(t.type)}
+                        onPress={() => decrementar(tkt.type)}
                         disabled={q <= 0}
                       >
                         <Text
@@ -329,7 +347,7 @@ export default function EventDetailScreen() {
                           { borderColor: borde },
                           q >= max && estilos.botonCantidadDeshabilitado,
                         ]}
-                        onPress={() => incrementar(t.type)}
+                        onPress={() => incrementar(tkt.type)}
                         disabled={q >= max}
                       >
                         <Text
@@ -359,7 +377,7 @@ export default function EventDetailScreen() {
               <Text
                 style={[estilos.etiquetaTotal, { color: textoSecundario }]}
               >
-                Total entradas
+                {t("event_detail_total_tickets")}
               </Text>
               <Text
                 style={[estilos.valorTotal, { color: textoPrincipal }]}
@@ -371,7 +389,7 @@ export default function EventDetailScreen() {
               <Text
                 style={[estilos.etiquetaTotal, { color: textoSecundario }]}
               >
-                Total a pagar
+                {t("event_detail_total_to_pay")}
               </Text>
               <Text
                 style={[estilos.valorTotal, { color: textoPrincipal }]}
@@ -399,7 +417,9 @@ export default function EventDetailScreen() {
             disabled={totalEntradas === 0 || reservando}
           >
             <Text style={estilos.textoBotonReservar}>
-              {reservando ? "Reservando..." : "Reservar entradas"}
+              {reservando
+                ? t("event_detail_button_reserving")
+                : t("event_detail_button_reserve")}
             </Text>
           </TouchableOpacity>
 
