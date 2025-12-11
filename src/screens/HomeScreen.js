@@ -20,14 +20,20 @@ import BottomMenu from "../components/BottomMenu";
 
 const { width } = Dimensions.get("window");
 const ANCHO_TARJETA = width - 32; // margen horizontal de 16 a cada lado
+const LIMITE_POR_PAGINA = 20;
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { isDark: esOscuro, setIsDark: setEsOscuro } = useThemeSettings();
 
   const [textoBusqueda, setTextoBusqueda] = useState("");
+
   const [eventos, setEventos] = useState([]);
-  const [cargando, setCargando] = useState(false);
+  const [pagina, setPagina] = useState(1);
+  const [totalEventos, setTotalEventos] = useState(null);
+
+  const [cargando, setCargando] = useState(false);      // carga inicial / reset
+  const [cargandoMas, setCargandoMas] = useState(false); // scroll infinito
   const [error, setError] = useState("");
 
   // Paleta de colores (claro / oscuro)
@@ -42,23 +48,49 @@ export default function HomeScreen() {
     sombraTarjeta: "#000000",
   };
 
-  // Cargar eventos desde la API
-  useEffect(() => {
-    const cargarEventos = async () => {
-      try {
+  // Función genérica para cargar eventos de una página
+  const cargarEventos = async (paginaNueva, reset = false) => {
+    try {
+      if (reset) {
         setCargando(true);
         setError("");
-        const resultado = await getEvents(1, 20);
-        setEventos(Array.isArray(resultado.data) ? resultado.data : []);
-      } catch (err) {
-        console.error(err);
-        setError("No se pudieron cargar los eventos.");
-      } finally {
-        setCargando(false);
+      } else {
+        setCargandoMas(true);
       }
-    };
 
-    cargarEventos();
+      const resultado = await getEvents(paginaNueva, LIMITE_POR_PAGINA);
+      const data = Array.isArray(resultado.data) ? resultado.data : [];
+
+      // total que viene desde el backend (si existe)
+      if (typeof resultado.total === "number") {
+        setTotalEventos(resultado.total);
+      }
+
+      if (reset) {
+        setEventos(data);
+      } else {
+        // concatenar sin duplicar por _id
+        setEventos((prev) => {
+          const idsPrev = new Set(prev.map((e) => e._id));
+          const nuevos = data.filter((e) => !idsPrev.has(e._id));
+          return [...prev, ...nuevos];
+        });
+      }
+
+      setPagina(paginaNueva);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudieron cargar los eventos.");
+    } finally {
+      setCargando(false);
+      setCargandoMas(false);
+    }
+  };
+
+  // Cargar primera página desde la API
+  useEffect(() => {
+    cargarEventos(1, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filtro por texto
@@ -66,10 +98,7 @@ export default function HomeScreen() {
     if (!textoBusqueda.trim()) return eventos;
     const q = textoBusqueda.toLowerCase();
     return eventos.filter((ev) =>
-      (ev.name ?? "")
-        .toString()
-        .toLowerCase()
-        .includes(q)
+      (ev.name ?? "").toString().toLowerCase().includes(q)
     );
   }, [textoBusqueda, eventos]);
 
@@ -159,6 +188,28 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         </View>
+      </View>
+    );
+  };
+
+  // Scroll infinito: cargar más cuando llegamos al final
+  const manejarFinScroll = () => {
+    if (cargando || cargandoMas) return;
+    if (textoBusqueda.trim()) return; // si está filtrando, no cargamos más
+
+    // si tenemos total desde la API y ya alcanzamos la cantidad, no pedimos más
+    if (totalEventos !== null && eventos.length >= totalEventos) return;
+
+    const paginaSiguiente = pagina + 1;
+    cargarEventos(paginaSiguiente, false);
+  };
+
+  // Footer mientras carga más
+  const renderFooter = () => {
+    if (!cargandoMas) return null;
+    return (
+      <View style={{ paddingVertical: 16 }}>
+        <ActivityIndicator size="small" color={COLORES.morado} />
       </View>
     );
   };
@@ -260,13 +311,11 @@ export default function HomeScreen() {
         </View>
 
         {/* CONTENIDO */}
-        {cargando && (
+        {cargando && eventos.length === 0 ? (
           <View style={{ marginTop: 40 }}>
             <ActivityIndicator size="large" color={COLORES.morado} />
           </View>
-        )}
-
-        {error ? (
+        ) : error && eventos.length === 0 ? (
           <View style={{ marginTop: 20, paddingHorizontal: 20 }}>
             <Text style={{ color: "crimson" }}>{error}</Text>
           </View>
@@ -274,9 +323,14 @@ export default function HomeScreen() {
           <FlatList
             data={eventosFiltrados}
             renderItem={renderizarItem}
-            keyExtractor={(item) => String(item._id)}
+            keyExtractor={(item, index) =>
+              item?._id ? String(item._id) : String(index)
+            }
             contentContainerStyle={estilos.contenidoLista}
             showsVerticalScrollIndicator={false}
+            onEndReached={manejarFinScroll}
+            onEndReachedThreshold={0.4}
+            ListFooterComponent={renderFooter}
           />
         )}
       </View>
@@ -310,6 +364,7 @@ const estilos = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
+  // Interruptor tema
   
 
   // Botones de segmento (Eventos / Compras)
