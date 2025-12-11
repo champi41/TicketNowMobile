@@ -27,6 +27,7 @@ const dictionary = {
   settings_language_label: "Idioma de la app",
   settings_subtitle: "Personaliza la apariencia y el idioma de TicketNow.",
   settings_language_help: "Elige el idioma en que prefieres ver la app.",
+  settings_Apariencia:"Apariencia",
     // ----- Purchases -----
     purchases_title: "Mis compras",
     purchases_subtitle:
@@ -113,7 +114,7 @@ const dictionary = {
   settings_language_label: "App language",
   settings_subtitle: "Customize TicketNow’s appearance and language.",
   settings_language_help: "Choose the language you prefer for the app.",
-
+  settings_Apariencia:"Appearance",
 
     purchases_title: "My purchases",
     purchases_subtitle:
@@ -197,7 +198,7 @@ const dictionary = {
   settings_language_label: "应用语言",
   settings_subtitle: "自定义 TicketNow 的外观和语言。",
   settings_language_help: "选择你希望在应用中看到的语言。",
-
+  settings_Apariencia:"外貌",
     purchases_title: "我的订单",
     purchases_subtitle: "查看在此设备上完成的预订和门票记录。",
     purchases_loading: "正在加载订单…",
@@ -276,7 +277,7 @@ const dictionary = {
   settings_language_label: "ऐप की भाषा",
   settings_subtitle: "TicketNow की रूप-रंग और भाषा को अनुकूलित करें।",
   settings_language_help: "वह भाषा चुनें जिसमें आप ऐप देखना चाहते हैं।",
-
+  settings_Apariencia:"दिखावट",
 
     purchases_title: "मेरी खरीदें",
     purchases_subtitle:
@@ -361,7 +362,7 @@ const dictionary = {
   settings_language_label: "لغة التطبيق",
   settings_subtitle: "خصّص مظهر TicketNow ولغته.",
   settings_language_help: "اختر اللغة التي تفضّلها لعرض التطبيق.",
-
+  settings_Apariencia:"المظهر",
 
     purchases_title: "مشترياتي",
     purchases_subtitle:

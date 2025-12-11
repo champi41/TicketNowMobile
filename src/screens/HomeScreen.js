@@ -44,7 +44,7 @@ export default function HomeScreen() {
     textoPrincipal: esOscuro ? "#F9FAFB" : "#1F2933",
     textoSecundario: esOscuro ? "#E5E7EB" : "#4B5563",
     morado: "#A855F7",
-    moradoSuave: "#FFFFFFFF",
+    moradoSuave: esOscuro ? "#020617" : "#FFFFFF",
     bordeMorado: "#C4B5FD",
     fondoTarjeta: esOscuro ? "#020617" : "#FFFFFF",
     sombraTarjeta: "#000000",

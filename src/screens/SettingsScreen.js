@@ -20,7 +20,7 @@ export default function SettingsScreen() {
 
   const fondo = esOscuro ? "#020617" : "#E5E7EB";
   const tarjeta = esOscuro ? "#020617" : "#FFFFFF";
-  const borde = esOscuro ? "#1F2937" : "#E5E7EB";
+  const borde = esOscuro ? "#710c6cff" : "#E5E7EB";
   const textoPrincipal = esOscuro ? "#F9FAFB" : "#111827";
   const textoSecundario = esOscuro ? "#9CA3AF" : "#4B5563";
   const morado = "#A855F7";
@@ -49,7 +49,7 @@ export default function SettingsScreen() {
             {
               backgroundColor: tarjeta,
               borderColor: borde,
-              shadowColor: "#000000",
+              shadowColor: "#000000ff",
             },
           ]}
         >
@@ -63,7 +63,7 @@ export default function SettingsScreen() {
               />
             </View>
             <Text style={[estilos.seccionTitulo, { color: textoPrincipal }]}>
-              Apariencia
+              {t("settings_Apariencia")}
             </Text>
           </View>
 
@@ -188,6 +188,7 @@ const estilos = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
+    
   },
 
   /* SECCIONES DENTRO DE LA TARJETA */
@@ -227,7 +228,7 @@ const estilos = StyleSheet.create({
   },
   divisor: {
     height: 1,
-    backgroundColor: "rgba(148, 163, 184, 0.45)",
+    backgroundColor: "rgba(8, 5, 5, 0.45)",
     marginVertical: 10,
   },
 

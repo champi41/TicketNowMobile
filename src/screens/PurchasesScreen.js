@@ -33,7 +33,7 @@ export default function PurchasesScreen() {
 
   const fondo = esOscuro ? "#020617" : "#F5F3FF";
   const tarjeta = esOscuro ? "#0F172A" : "#FFFFFF";
-  const borde = esOscuro ? "#1F2937" : "#E5E7EB";
+  const borde = esOscuro ? "#1F2937" : "#ebe5e9ff";
   const textoPrincipal = esOscuro ? "#F9FAFB" : "#111827";
   const textoSecundario = esOscuro ? "#9CA3AF" : "#4B5563";
   const morado = "#A855F7";
