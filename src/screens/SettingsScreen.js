@@ -8,43 +8,41 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+
 import { useThemeSettings } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import BottomMenu from "../components/BottomMenu";
 
 export default function SettingsScreen() {
-  const { isDark: esOscuro, setIsDark: setEsOscuro } = useThemeSettings();
-  const { language, setLanguage, t } = useLanguage();
+  const { isDark: esOscuro, setIsDark } = useThemeSettings();
+  const { language, changeLanguage, t, availableLanguages } = useLanguage();
 
-  const fondo = esOscuro ? "#020617" : "#F5F3FF";
-  const tarjeta = esOscuro ? "#0F172A" : "#FFFFFF";
+  const fondo = esOscuro ? "#020617" : "#E5E7EB";
+  const tarjeta = esOscuro ? "#020617" : "#FFFFFF";
   const borde = esOscuro ? "#1F2937" : "#E5E7EB";
   const textoPrincipal = esOscuro ? "#F9FAFB" : "#111827";
   const textoSecundario = esOscuro ? "#9CA3AF" : "#4B5563";
   const morado = "#A855F7";
-  const moradoSuave = "#E9D5FF";
 
   return (
     <SafeAreaView
       style={[estilos.contenedor, { backgroundColor: fondo }]}
       edges={["top"]}
     >
-      <View style={{ flex: 1 }}>
-        {/* ENCABEZADO */}
+      {/* Contenido con padding lateral */}
+      <View style={estilos.contenido}>
+        {/* ENCABEZADO GENERAL */}
         <View style={estilos.header}>
-          <Text
-            style={[estilos.headerTitulo, { color: textoPrincipal }]}
-          >
+          <Text style={[estilos.headerTitulo, { color: textoPrincipal }]}>
             {t("settings_title")}
           </Text>
-          <Text
-            style={[estilos.headerSubtitulo, { color: textoSecundario }]}
-          >
+          <Text style={[estilos.headerSubtitulo, { color: textoSecundario }]}>
             {t("settings_subtitle")}
           </Text>
         </View>
 
-        {/* TARJETA */}
+        {/* TARJETA PRINCIPAL */}
         <View
           style={[
             estilos.tarjeta,
@@ -55,28 +53,27 @@ export default function SettingsScreen() {
             },
           ]}
         >
-          {/* Apariencia */}
-          <Text
-            style={[
-              estilos.tituloSeccion,
-              { color: textoPrincipal },
-            ]}
-          >
-            {t("settings_appearance")}
-          </Text>
+          {/* SECCIÓN APARIENCIA */}
+          <View style={estilos.seccionEncabezado}>
+            <View style={estilos.iconoFondo}>
+              <Ionicons
+                name={esOscuro ? "moon" : "sunny"}
+                size={18}
+                color={morado}
+              />
+            </View>
+            <Text style={[estilos.seccionTitulo, { color: textoPrincipal }]}>
+              Apariencia
+            </Text>
+          </View>
 
           <View style={estilos.fila}>
             <View style={{ flex: 1 }}>
-              <Text
-                style={[estilos.label, { color: textoPrincipal }]}
-              >
-                {t("settings_dark_mode")}
+              <Text style={[estilos.label, { color: textoPrincipal }]}>
+                {t("settings_dark_mode_label")}
               </Text>
               <Text
-                style={[
-                  estilos.descripcion,
-                  { color: textoSecundario },
-                ]}
+                style={[estilos.descripcion, { color: textoSecundario }]}
               >
                 {t("settings_dark_mode_desc")}
               </Text>
@@ -84,96 +81,73 @@ export default function SettingsScreen() {
 
             <Switch
               value={esOscuro}
-              onValueChange={(v) => setEsOscuro(v)}
-              trackColor={{ false: "#E5E7EB", true: "#C4B5FD" }}
-              thumbColor={esOscuro ? morado : "#FFFFFF"}
+              onValueChange={setIsDark}
+              trackColor={{ false: "#D1D5DB", true: "#4C1D95" }}
+              thumbColor={esOscuro ? "#F9FAFB" : "#FFFFFF"}
             />
           </View>
 
-          <View style={estilos.separador} />
+          <View style={estilos.divisor} />
 
-          {/* Idioma */}
+          {/* SECCIÓN IDIOMA */}
+          <View style={estilos.seccionEncabezado}>
+            <View style={estilos.iconoFondo}>
+              <Ionicons name="globe-outline" size={18} color={morado} />
+            </View>
+            <Text style={[estilos.seccionTitulo, { color: textoPrincipal }]}>
+              {t("settings_language_label")}
+            </Text>
+          </View>
+
           <Text
             style={[
-              estilos.tituloSeccion,
-              { color: textoPrincipal },
+              estilos.descripcion,
+              { color: textoSecundario, marginBottom: 10 },
             ]}
           >
-            {t("settings_language_section")}
+            {t("settings_language_help")}
           </Text>
 
-          <View style={estilos.fila}>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[estilos.label, { color: textoPrincipal }]}
-              >
-                {t("settings_language_label")}
-              </Text>
-              <Text
-                style={[
-                  estilos.descripcion,
-                  { color: textoSecundario },
-                ]}
-              >
-                {t("settings_language_desc")}
-              </Text>
-            </View>
-
-            <View style={estilos.contenedorPillsIdioma}>
-              <TouchableOpacity
-                style={[
-                  estilos.pillIdioma,
-                  language === "es" && {
-                    backgroundColor: moradoSuave,
-                    borderColor: morado,
-                  },
-                ]}
-                onPress={() => setLanguage("es")}
-              >
-                <Text
+          <View style={estilos.contenedorIdiomas}>
+            {availableLanguages.map((lang) => {
+              const activo = language === lang.code;
+              return (
+                <TouchableOpacity
+                  key={lang.code}
                   style={[
-                    estilos.textoPill,
-                    {
-                      color:
-                        language === "es"
-                          ? morado
-                          : textoSecundario,
+                    estilos.chipIdioma,
+                    activo && {
+                      borderColor: morado,
+                      backgroundColor: esOscuro ? "#111827" : "#F5F3FF",
                     },
                   ]}
+                  onPress={() => changeLanguage(lang.code)}
                 >
-                  ES
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  estilos.pillIdioma,
-                  language === "en" && {
-                    backgroundColor: moradoSuave,
-                    borderColor: morado,
-                  },
-                ]}
-                onPress={() => setLanguage("en")}
-              >
-                <Text
-                  style={[
-                    estilos.textoPill,
-                    {
-                      color:
-                        language === "en"
-                          ? morado
-                          : textoSecundario,
-                    },
-                  ]}
-                >
-                  EN
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  <Text
+                    style={{
+                      color: activo ? morado : textoSecundario,
+                      fontWeight: activo ? "700" : "500",
+                      fontSize: 13,
+                    }}
+                  >
+                    {lang.label}
+                  </Text>
+                  {activo && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color={morado}
+                      style={{ marginLeft: 6 }}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </View>
 
+      {/* Menú inferior a todo lo ancho */}
       <BottomMenu active="settings" />
     </SafeAreaView>
   );
@@ -182,74 +156,94 @@ export default function SettingsScreen() {
 const estilos = StyleSheet.create({
   contenedor: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
   },
+  contenido: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+
+  /* HEADER */
   header: {
-    marginBottom: 16,
+    marginBottom: 10,
+    marginTop: 4,
   },
   headerTitulo: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
   headerSubtitulo: {
     marginTop: 4,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
   },
+
+  /* TARJETA */
   tarjeta: {
     borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 16,
+    borderRadius: 20,
+    paddingHorizontal: 18,
     paddingVertical: 16,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  tituloSeccion: {
+
+  /* SECCIONES DENTRO DE LA TARJETA */
+  seccionEncabezado: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    marginTop: 4,
+  },
+  iconoFondo: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+    backgroundColor: "rgba(168, 85, 247, 0.14)",
+  },
+  seccionTitulo: {
     fontSize: 15,
     fontWeight: "700",
-    marginBottom: 10,
-    textTransform: "uppercase",
-    letterSpacing: 1,
   },
+
   fila: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-    gap: 12,
+    marginBottom: 14,
   },
   label: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
   descripcion: {
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 2,
   },
-  separador: {
+  divisor: {
     height: 1,
-    backgroundColor: "rgba(148, 163, 184, 0.30)",
-    marginVertical: 4,
+    backgroundColor: "rgba(148, 163, 184, 0.45)",
+    marginVertical: 10,
   },
-  contenedorPillsIdioma: {
+
+  /* IDIOMAS */
+  contenedorIdiomas: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
+    marginTop: 4,
   },
-  pillIdioma: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "transparent",
-    minWidth: 38,
+  chipIdioma: {
+    flexDirection: "row",
     alignItems: "center",
-  },
-  textoPill: {
-    fontSize: 12,
-    fontWeight: "700",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
   },
 });

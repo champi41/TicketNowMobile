@@ -533,7 +533,7 @@ export default function CheckoutScreen() {
           </View>
         </ScrollView>
 
-        {/* Botón + menú */}
+        {/* Footer SOLO con el botón */}
         <View
           style={[
             estilos.footer,
@@ -555,9 +555,10 @@ export default function CheckoutScreen() {
                 : t("checkout_button_confirm")}
             </Text>
           </TouchableOpacity>
-
-          <BottomMenu active="home" />
         </View>
+
+        {/* Menú inferior ocupando todo el ancho */}
+        <BottomMenu active="home" />
       </View>
     </SafeAreaView>
   );

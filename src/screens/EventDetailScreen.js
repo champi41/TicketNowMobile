@@ -400,7 +400,7 @@ export default function EventDetailScreen() {
           </View>
         </ScrollView>
 
-        {/* Footer: botón + menú */}
+        {/* Footer SOLO para el botón */}
         <View
           style={[
             estilos.footer,
@@ -422,9 +422,10 @@ export default function EventDetailScreen() {
                 : t("event_detail_button_reserve")}
             </Text>
           </TouchableOpacity>
-
-          <BottomMenu active="home" />
         </View>
+
+        {/* Menú inferior a pantalla completa */}
+        <BottomMenu active="home" />
       </View>
     </SafeAreaView>
   );

@@ -9,14 +9,15 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { useThemeSettings } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function BottomMenu({ active = "home" }) {
   const navigation = useNavigation();
   const { isDark: esOscuro } = useThemeSettings();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage(); // 👈 para traducir textos
 
   const fondo = esOscuro ? "#020617" : "#FFFFFF";
   const borde = esOscuro ? "#1F2937" : "#E5E7EB";
@@ -30,11 +31,10 @@ export default function BottomMenu({ active = "home" }) {
         {
           backgroundColor: fondo,
           borderTopColor: borde,
-          paddingBottom: insets.bottom + 6, // se mantiene tu ajuste
+          paddingBottom: insets.bottom + 4,
         },
       ]}
     >
-      {/* BOTÓN INICIO */}
       <TouchableOpacity
         style={estilos.item}
         onPress={() => navigation.navigate("Home")}
@@ -55,7 +55,6 @@ export default function BottomMenu({ active = "home" }) {
         </Text>
       </TouchableOpacity>
 
-      {/* BOTÓN AJUSTES */}
       <TouchableOpacity
         style={estilos.item}
         onPress={() => navigation.navigate("Settings")}
@@ -82,10 +81,17 @@ export default function BottomMenu({ active = "home" }) {
 const estilos = StyleSheet.create({
   contenedor: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 60,
+    justifyContent: "space-around",   // 👉 más separados, ocupan más ancho
+    alignItems: "center",
+    paddingHorizontal: 16,            // 👉 menos margen lateral
     paddingTop: 6,
     borderTopWidth: 1,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 8,
   },
   item: {
     alignItems: "center",
